@@ -43,21 +43,29 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [users, movies, subscriptions, trending] = await Promise.all([
-        userService.getAll(),
-        movieService.getAll(),
-        subscriptionService.getAll(),
-        movieService.getTrending?.(5) || Promise.resolve([])
+      const [users, movies, subscriptions] = await Promise.all([
+        userService.getAll().catch(() => []),
+        movieService.getAll().catch(() => []),
+        subscriptionService.getAll().catch(() => []),
       ]);
+
+      let trending: Movie[] = [];
+      try {
+        trending = await movieService.getTrending(5);
+      } catch (err) {
+        console.warn('Failed to fetch trending movies, using first 5 movies instead.');
+        trending = movies.slice(0, 5);
+      }
 
       const activeSubs = subscriptions.filter(s => s.status === 'active').length;
       const totalRevenue = subscriptions.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
       const totalViews = movies.reduce((acc, curr) => acc + (curr.view_count || 0), 0);
+      const totalSeries = movies.filter(m => m.movie_type?.toLowerCase() === 'series').length;
 
       setStats([
-        { label: 'Total Users', value: users.length.toLocaleString(), icon: Users, trend: '+0%', isUp: true },
-        { label: 'Total Movies', value: movies.length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
-        { label: 'Total Series', value: '0', icon: Tv, trend: '+0%', isUp: true }, // Placeholder for series
+        { label: 'Total Users', value: (users?.length || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
+        { label: 'Total Movies', value: movies.filter(m => m.movie_type?.toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
+        { label: 'Total Series', value: totalSeries.toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
         { label: 'Active Subs', value: activeSubs.toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
         { label: 'Revenue', value: formatCurrency(totalRevenue), icon: TrendingUp, trend: '+0%', isUp: true },
         { label: 'Total Views', value: totalViews.toLocaleString(), icon: Eye, trend: '+0%', isUp: true },

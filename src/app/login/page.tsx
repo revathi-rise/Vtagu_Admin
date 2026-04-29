@@ -19,18 +19,21 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     
-    // Simulate API call for static login
-    setTimeout(() => {
-      setAuth({
-        id: '1',
-        name: 'Super Admin',
-        email: email,
-        role: 'administrator'
-      }, 'mock-jwt-token');
+    try {
+      const response = await userService.login(email, password);
       
+      if (response.status && response.token) {
+        setAuth(response.data, response.token);
+        router.push('/dashboard');
+      } else {
+        setError(response.message || 'Login failed. Please check your credentials.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred during login. Please try again.');
+      console.error('Login error:', err);
+    } finally {
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   return (

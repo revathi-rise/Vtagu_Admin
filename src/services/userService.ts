@@ -53,6 +53,16 @@ export const userService = {
     return response.data.data;
   },
 
+  forgotPassword: async (data: { email: string }) => {
+    const response = await apiClient.post('/users/forgot-password', data);
+    return response.data;
+  },
+
+  resetPassword: async (data: any) => {
+    const response = await apiClient.post('/users/reset-password', data);
+    return response.data;
+  },
+
   // Note: The documentation doesn't have a specific "getAllUsers" endpoint for admin, 
   // but usually admin panels need this. I'll assume /users might work or I'll check if there's one.
   // For now, I'll add it as a placeholder.

@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -10,9 +11,11 @@ const apiClient = axios.create({
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('admin_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -24,10 +27,13 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized (e.g., redirect to login or clear token)
+      // Handle unauthorized - clear token and redirect to login
       if (typeof window !== 'undefined') {
         localStorage.removeItem('admin_token');
-        // window.location.href = '/login';
+        // Prevent infinite redirect loop if already on login page
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

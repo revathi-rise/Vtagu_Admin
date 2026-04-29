@@ -1,27 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { DataTable } from '@/components/ui/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
-import { Tv, Layers, Plus } from 'lucide-react';
+import { Tv, Layers, Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-
-interface Series {
-  series_id: string;
-  title: string;
-  seasons: number;
-  episodes: number;
-  status: 'ongoing' | 'completed';
-  rating: string;
-}
-
-const mockSeries: Series[] = [
-  { series_id: '1', title: 'The Great Venture', seasons: 3, episodes: 36, status: 'ongoing', rating: 'PG-13' },
-  { series_id: '2', title: 'Midnight Mystery', seasons: 1, episodes: 10, status: 'completed', rating: 'R' },
-];
+import { movieService, Movie } from '@/services/movieService';
 
 export default function SeriesPage() {
-  const columns: ColumnDef<Series>[] = [
+  const [series, setSeries] = useState<Movie[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSeries();
+  }, []);
+
+  const fetchSeries = async () => {
+    try {
+      setIsLoading(true);
+      const allMovies = await movieService.getAll();
+      const onlySeries = allMovies.filter(m => m.movie_type?.toLowerCase() === 'series');
+      setSeries(onlySeries);
+    } catch (error) {
+      console.error('Failed to fetch series:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const columns: ColumnDef<Movie>[] = [
     {
       accessorKey: 'title',
       header: 'Series',
@@ -35,23 +42,17 @@ export default function SeriesPage() {
       )
     },
     {
-      accessorKey: 'seasons',
-      header: 'Seasons',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 font-medium">
-          <Layers className="w-4 h-4 text-muted-foreground" />
-          {row.original.seasons}
-        </div>
-      )
+      accessorKey: 'year',
+      header: 'Year',
     },
     {
-      accessorKey: 'episodes',
-      header: 'Total Episodes',
+      accessorKey: 'rating',
+      header: 'Rating',
     },
     {
       id: 'actions',
       cell: ({ row }) => (
-        <Link href={`/series/${row.original.series_id}`} className="text-primary text-sm font-medium hover:underline">
+        <Link href={`/series/${row.original.id}`} className="text-primary text-sm font-medium hover:underline">
           Manage Seasons →
         </Link>
       )
@@ -70,7 +71,15 @@ export default function SeriesPage() {
           Add Series
         </button>
       </div>
-      <DataTable columns={columns} data={mockSeries} />
+
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-64 bg-card rounded-2xl border border-dashed border-border">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+          <p className="text-muted-foreground">Loading web series...</p>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={series} searchPlaceholder="Search series..." />
+      )}
     </div>
   );
 }

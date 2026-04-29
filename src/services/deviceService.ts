@@ -53,5 +53,10 @@ export const deviceService = {
   logoutOthers: async (userId: number, deviceId: string) => {
     const response = await apiClient.post<{ status: boolean; message: string }>(`/user-devices/user/${userId}/logout-others/${deviceId}`);
     return response.data;
+  },
+
+  getAll: async () => {
+    const response = await apiClient.get<{ status: boolean; data: Device[] }>('/user-devices');
+    return response.data.data;
   }
 };
