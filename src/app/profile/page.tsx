@@ -18,14 +18,14 @@ export default function ProfilePage() {
         <div className="bg-card border border-border rounded-3xl p-8 flex flex-col items-center gap-6">
           <div className="relative group">
             <div className="w-32 h-32 rounded-full bg-brand-gradient flex items-center justify-center text-white text-4xl font-bold shadow-xl shadow-primary/20">
-              {user?.name?.[0] || 'A'}
+              {user?.user_name?.[0] || 'A'}
             </div>
             <button className="absolute bottom-0 right-0 p-2 bg-card border border-border rounded-full hover:bg-muted transition-colors shadow-lg">
               <Camera className="w-5 h-5 text-primary" />
             </button>
           </div>
           <div className="text-center">
-            <h2 className="text-xl font-bold">{user?.name || 'Super Admin'}</h2>
+            <h2 className="text-xl font-bold">{user?.user_name || 'Super Admin'}</h2>
             <p className="text-sm text-muted-foreground uppercase tracking-widest mt-1">{user?.role || 'Administrator'}</p>
           </div>
           <div className="w-full h-px bg-border" />
@@ -55,7 +55,7 @@ export default function ProfilePage() {
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input 
                     className="w-full bg-muted/50 border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 ring-primary/20 outline-none" 
-                    defaultValue={user?.name || ''}
+                    defaultValue={user?.user_name || ''}
                   />
                 </div>
               </div>

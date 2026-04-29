@@ -2,6 +2,7 @@ import apiClient from '@/lib/api-client';
 
 export interface User {
   userId: number;
+  id?: string | number;          // alias returned in login token
   email: string;
   user_name: string;
   mobile: string;
@@ -10,6 +11,7 @@ export interface User {
   profile_picture?: string;
   status: 'active' | 'inactive' | 'suspended';
   plan?: string;
+  role?: string;                 // admin role returned in login token
   logged_in?: boolean;
   last_login_ip_address?: string;
   createdAt: string;
