@@ -12,6 +12,7 @@ export interface User {
   status: 'active' | 'inactive' | 'suspended';
   plan?: string;
   role?: string;                 // admin role returned in login token
+  is_admin?: boolean;
   logged_in?: boolean;
   last_login_ip_address?: string;
   createdAt: string;
@@ -26,7 +27,7 @@ export interface AuthResponse {
 
 export const userService = {
   login: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/users/login', { email, password });
+    const response = await apiClient.post<AuthResponse>('/users/admin/login', { email, password });
     return response.data;
   },
 

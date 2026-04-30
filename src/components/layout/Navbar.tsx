@@ -30,7 +30,7 @@ export function Navbar() {
         <div className="flex items-center gap-3 pl-2">
           <div className="flex flex-col items-end hidden sm:flex">
             <span className="text-sm font-semibold">{user?.user_name || 'Admin User'}</span>
-            <span className="text-xs text-muted-foreground capitalize">{user?.role || 'Super Admin'}</span>
+            <span className="text-xs text-muted-foreground capitalize">{user?.role || (user?.is_admin ? 'Super Admin' : 'Staff')}</span>
           </div>
           
           <div className="relative group">
