@@ -46,6 +46,34 @@ export default function InteractiveEditorPage() {
 
   const removeNode = (id: string) => setNodes(nodes.filter(n => n.id !== id));
 
+  const updateNode = (id: string, timestamp: string) => {
+    setNodes(nodes.map(n => n.id === id ? { ...n, timestamp } : n));
+  };
+
+  const updateChoice = (nodeId: string, choiceId: string, field: keyof Choice, value: string) => {
+    setNodes(nodes.map(n => {
+      if (n.id === nodeId) {
+        return {
+          ...n,
+          choices: n.choices.map(c => c.id === choiceId ? { ...c, [field]: value } : c)
+        };
+      }
+      return n;
+    }));
+  };
+
+  const addChoice = (nodeId: string) => {
+    setNodes(nodes.map(n => {
+      if (n.id === nodeId) {
+        return {
+          ...n,
+          choices: [...n.choices, { id: Date.now().toString(), label: '', next_video_url: '' }]
+        };
+      }
+      return n;
+    }));
+  };
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-20">
       <div className="flex items-center justify-between">
@@ -71,69 +99,85 @@ export default function InteractiveEditorPage() {
       </div>
 
       <div className="space-y-6">
-        {nodes.map((node, index) => (
-          <div key={node.id} className="relative group">
-            {index !== nodes.length - 1 && (
-              <div className="absolute left-10 top-full h-6 w-0.5 bg-border -z-10" />
-            )}
-            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:border-primary/50 transition-colors">
-              <div className="p-4 bg-muted/30 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg">
-                    SPLIT {index + 1}
+        {nodes.length > 0 ? (
+          nodes.map((node, index) => (
+            <div key={node.id} className="relative group">
+              {index !== nodes.length - 1 && (
+                <div className="absolute left-10 top-full h-6 w-0.5 bg-border -z-10" />
+              )}
+              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:border-primary/50 transition-colors">
+                <div className="p-4 bg-muted/30 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg">
+                      SPLIT {index + 1}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      At timestamp: 
+                      <input 
+                        type="text" 
+                        value={node.timestamp} 
+                        onChange={(e) => updateNode(node.id, e.target.value)}
+                        className="bg-muted border border-border rounded px-2 py-0.5 text-foreground w-16 outline-none focus:ring-1 ring-primary"
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    At timestamp: 
-                    <input 
-                      type="text" 
-                      value={node.timestamp} 
-                      className="bg-muted border border-border rounded px-2 py-0.5 text-foreground w-16 outline-none focus:ring-1 ring-primary"
-                    />
-                  </div>
+                  <button onClick={() => removeNode(node.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button onClick={() => removeNode(node.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
 
-              <div className="p-6 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {node.choices.map((choice, i) => (
-                    <div key={choice.id} className="p-4 bg-muted/50 rounded-xl border border-border space-y-3 relative group/choice">
-                      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Choice {i + 1}</div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium">Text Label</label>
-                        <input 
-                          placeholder="e.g. Enter the Cave"
-                          className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 ring-primary"
-                          value={choice.label}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-medium">Next Video Clip</label>
-                        <div className="flex items-center gap-2">
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {node.choices.map((choice, i) => (
+                      <div key={choice.id} className="p-4 bg-muted/50 rounded-xl border border-border space-y-3 relative group/choice">
+                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Choice {i + 1}</div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium">Text Label</label>
                           <input 
-                            placeholder="Select clip..."
-                            className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none"
-                            value={choice.next_video_url}
+                            placeholder="e.g. Enter the Cave"
+                            className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 ring-primary"
+                            value={choice.label}
+                            onChange={(e) => updateChoice(node.id, choice.id, 'label', e.target.value)}
                           />
-                          <button className="p-2 border border-border rounded-lg hover:bg-card">
-                            <ChevronRight className="w-4 h-4" />
-                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium">Next Video Clip</label>
+                          <div className="flex items-center gap-2">
+                            <input 
+                              placeholder="Select clip..."
+                              className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none"
+                              value={choice.next_video_url}
+                              onChange={(e) => updateChoice(node.id, choice.id, 'next_video_url', e.target.value)}
+                            />
+                            <button className="p-2 border border-border rounded-lg hover:bg-card">
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  <button className="border-2 border-dashed border-border rounded-xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all p-6">
-                    <Plus className="w-5 h-5" />
-                    Add Path
-                  </button>
+                    ))}
+                    <button 
+                      onClick={() => addChoice(node.id)}
+                      className="border-2 border-dashed border-border rounded-xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all p-6"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Path
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-20 bg-card border border-dashed border-border rounded-3xl">
+            <GitBranch className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+            <h3 className="text-lg font-semibold">No decision nodes yet</h3>
+            <p className="text-muted-foreground max-w-xs mx-auto mt-2">
+              Add your first branching point to start building the interactive experience.
+            </p>
           </div>
-        ))}
+        )}
 
         <button 
           onClick={addNode}

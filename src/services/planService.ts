@@ -2,12 +2,14 @@ import apiClient from '@/lib/api-client';
 
 export interface Plan {
   id: number;
-  name: string;
-  description: string;
-  price: number;
-  duration_days: number;
-  status: 'active' | 'inactive';
-  created_at: string;
+  plan_name: string;
+  plan_price: string | number;
+  plan_duration: string;
+  plan_description?: string;
+  name?: string; // fallback
+  price?: number; // fallback
+  status: 'active' | 'inactive' | number;
+  created_at?: string;
 }
 
 export const planService = {

@@ -14,27 +14,34 @@ export interface Episode {
 
 export const episodeService = {
   getAll: async () => {
-    const response = await apiClient.get<{ status: boolean; data: Episode[] }>('/episodes');
-    return response.data.data;
+    try {
+      const response = await apiClient.get<Episode[]>('/episodes');
+      return response.data || [];
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return [];
+      }
+      throw error;
+    }
   },
 
   getById: async (id: number) => {
-    const response = await apiClient.get<{ status: boolean; data: Episode }>(`/episodes/${id}`);
-    return response.data.data;
+    const response = await apiClient.get<Episode>(`/episodes/${id}`);
+    return response.data;
   },
 
   create: async (data: Partial<Episode>) => {
-    const response = await apiClient.post<{ status: boolean; data: Episode }>('/episodes', data);
-    return response.data.data;
+    const response = await apiClient.post<Episode>('/episodes', data);
+    return response.data;
   },
 
   update: async (id: number, data: Partial<Episode>) => {
-    const response = await apiClient.patch<{ status: boolean; data: Episode }>(`/episodes/${id}`, data);
-    return response.data.data;
+    const response = await apiClient.patch<Episode>(`/episodes/${id}`, data);
+    return response.data;
   },
 
   delete: async (id: number) => {
-    const response = await apiClient.delete<{ status: boolean; message: string }>(`/episodes/${id}`);
+    const response = await apiClient.delete<{ message: string }>(`/episodes/${id}`);
     return response.data;
   }
 };

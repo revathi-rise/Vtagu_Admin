@@ -49,8 +49,8 @@ export default function GenresPage() {
                 <div className="p-3 bg-muted rounded-xl w-fit mb-4 group-hover:bg-primary/10 transition-colors">
                   <Tag className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="font-bold text-lg">{genre.name}</h3>
-                <p className="text-sm text-muted-foreground mt-2">{genre.slug}</p>
+                <h3 className="font-bold text-lg">{genre.genre_name}</h3>
+                <p className="text-sm text-muted-foreground mt-2">ID: {genre.genre_id} • In Home: {genre.in_home}</p>
                 {genre.status && (
                   <span className="inline-block mt-3 px-2 py-1 bg-muted rounded text-[10px] font-bold uppercase tracking-wider">
                     {genre.status}

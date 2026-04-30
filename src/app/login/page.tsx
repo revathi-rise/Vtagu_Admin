@@ -7,8 +7,8 @@ import { Smartphone, Lock, User, Loader2, AlertCircle } from 'lucide-react';
 import { userService } from '@/services/userService';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@primetime.com');
-  const [password, setPassword] = useState('vtagu@2025');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setAuth } = useAuthStore();
@@ -19,25 +19,21 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     
-    // Static Login for now
-    setTimeout(() => {
-      if (email === 'admin@primetime.com' && password === 'vtagu@2025') {
-        setAuth({
-          userId: 1,
-          id: '1',
-          email: 'admin@primetime.com',
-          user_name: 'Super Admin',
-          is_admin: true,
-          status: 'active',
-          mobile: '1234567890',
-          createdAt: new Date().toISOString()
-        }, 'static-admin-token');
+    try {
+      const response = await userService.login(email, password);
+      
+      if (response.status && response.token) {
+        setAuth(response.data, response.token);
         router.push('/dashboard');
       } else {
-        setError('Invalid admin credentials.');
+        setError(response.message || 'Login failed. Please check your credentials.');
       }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'An error occurred during login. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

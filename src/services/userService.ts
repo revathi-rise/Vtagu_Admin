@@ -2,20 +2,18 @@ import apiClient from '@/lib/api-client';
 
 export interface User {
   userId: number;
-  id?: string | number;          // alias returned in login token
   email: string;
   user_name: string;
-  mobile: string;
+  role: string;
+  status: string;
+  logged_in: boolean;
+  last_login_ip_address: string;
+  createdAt: string;
+  mobile?: string;
   age?: number;
   gender?: string;
   profile_picture?: string;
-  status: 'active' | 'inactive' | 'suspended';
   plan?: string;
-  role?: string;                 // admin role returned in login token
-  is_admin?: boolean;
-  logged_in?: boolean;
-  last_login_ip_address?: string;
-  createdAt: string;
 }
 
 export interface AuthResponse {
@@ -72,14 +70,11 @@ export const userService = {
   getAll: async (): Promise<User[]> => {
     try {
       const response = await apiClient.get<{ status: boolean; data: User[] }>('/users');
-      return response.data.data;
+      return response.data.data || [];
     } catch (error: any) {
       if (error.response?.status === 404) {
-        console.warn('GET /users not found. Returning mock data for admin panel.');
-        return [
-          { userId: 1, email: 'john@example.com', user_name: 'John Doe', mobile: '1234567890', status: 'active', createdAt: new Date().toISOString() },
-          { userId: 2, email: 'jane@example.com', user_name: 'Jane Smith', mobile: '0987654321', status: 'active', createdAt: new Date().toISOString() },
-        ];
+        console.warn('GET /users not found. Returning empty array.');
+        return [];
       }
       throw error;
     }

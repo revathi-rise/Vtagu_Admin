@@ -1,10 +1,12 @@
 import apiClient from '@/lib/api-client';
 
 export interface Genre {
-  genre_id: string;
-  name: string;
-  slug: string;
-  image?: string;
+  genre_id: number | string;
+  genre_name: string;
+  in_home: string;
+  path?: string;
+  name?: string; // fallback
+  slug?: string;
   status?: string;
 }
 

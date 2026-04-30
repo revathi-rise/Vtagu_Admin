@@ -41,14 +41,14 @@ export default function MoviesPage() {
 
   const columns: ColumnDef<Movie>[] = [
     {
-      accessorKey: 'title',
+      accessorKey: 'movie_name',
       header: 'Movie',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-14 bg-muted rounded overflow-hidden relative group">
             <img 
-              src={row.original.movie_image || 'https://via.placeholder.com/150'} 
-              alt={row.original.title}
+              src={row.original.movie_poster || 'https://via.placeholder.com/150'} 
+              alt={row.original.movie_name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -56,8 +56,8 @@ export default function MoviesPage() {
             </div>
           </div>
           <div>
-            <div className="font-semibold text-sm">{row.original.title}</div>
-            <div className="text-xs text-muted-foreground">{row.original.year} • {row.original.duration}</div>
+            <div className="font-semibold text-sm">{row.original.movie_name}</div>
+            <div className="text-xs text-muted-foreground">{row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
           </div>
         </div>
       ),

@@ -128,10 +128,14 @@ export default function DashboardPage() {
                 <div key={movie.id} className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-xl transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-14 bg-muted rounded-md overflow-hidden relative">
-                      <img src={movie.movie_image} alt={movie.title} className="w-full h-full object-cover" />
+                      <img 
+                        src={movie.movie_poster || movie.movie_image || 'https://via.placeholder.com/150'} 
+                        alt={movie.movie_name || movie.title} 
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <div>
-                      <p className="font-medium">{movie.title}</p>
+                      <p className="font-medium">{movie.movie_name || movie.title}</p>
                       <p className="text-xs text-muted-foreground">{movie.type} • {movie.duration}</p>
                     </div>
                   </div>

@@ -2,32 +2,26 @@ import apiClient from '@/lib/api-client';
 
 export interface Movie {
   id: number;
-  title: string;
+  movie_name: string;
   slug: string;
-  description_short: string;
-  description_long: string;
-  year: number;
-  country_id?: string;
-  rating: string;
-  genre_id?: string;
-  age_group?: string;
-  actors?: string;
-  director?: string;
-  featured: boolean;
-  free: boolean;
-  movie_type: string;
-  type: string;
-  age_restriction?: string;
-  kids_restriction?: string;
-  url: string;
-  trailer_url?: string;
-  movie_image: string;
-  duration: string;
-  languages?: string;
-  view_count: number;
-  is_interactive: boolean;
-  created_at: string;
-  updated_at: string;
+  movie_poster: string;
+  movie_desc?: string;
+  movie_trailer?: string;
+  movie_video?: string;
+  genre?: string;
+  cast_name?: string;
+  director_name?: string;
+  rating?: string;
+  duration?: string;
+  release_date?: string;
+  title?: string; // fallback
+  movie_image?: string; // fallback
+  created_at?: string;
+  updated_at?: string;
+  featured?: boolean;
+  view_count?: number;
+  type?: string;
+  movie_type?: string;
 }
 
 export const movieService = {

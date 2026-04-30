@@ -10,6 +10,7 @@ import { movieService, Movie } from '@/services/movieService';
 export default function SeriesPage() {
   const [series, setSeries] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSeries();
@@ -18,11 +19,14 @@ export default function SeriesPage() {
   const fetchSeries = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const allMovies = await movieService.getAll();
-      const onlySeries = allMovies.filter(m => m.movie_type?.toLowerCase() === 'series');
+      const onlySeries = (allMovies || []).filter(m => m.movie_type?.toLowerCase() === 'series');
       setSeries(onlySeries);
-    } catch (error) {
-      console.error('Failed to fetch series:', error);
+    } catch (err: any) {
+      console.error('Failed to fetch series:', err);
+      setError('Could not load series. Please try again later.');
+      setSeries([]);
     } finally {
       setIsLoading(false);
     }
@@ -30,20 +34,21 @@ export default function SeriesPage() {
 
   const columns: ColumnDef<Movie>[] = [
     {
-      accessorKey: 'title',
+      accessorKey: 'movie_name',
       header: 'Series',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary/10 rounded flex items-center justify-center text-primary">
             <Tv className="w-5 h-5" />
           </div>
-          <span className="font-semibold">{row.original.title}</span>
+          <span className="font-semibold">{row.original.movie_name}</span>
         </div>
       )
     },
     {
-      accessorKey: 'year',
+      accessorKey: 'release_date',
       header: 'Year',
+      cell: ({ row }) => row.original.release_date?.split('-')[0] || 'N/A'
     },
     {
       accessorKey: 'rating',
@@ -71,6 +76,12 @@ export default function SeriesPage() {
           Add Series
         </button>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl flex items-center gap-3">
+          <p>{error}</p>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64 bg-card rounded-2xl border border-dashed border-border">

@@ -56,22 +56,22 @@ export default function SubscriptionsPage() {
                     </div>
                     <div className={cn(
                       "flex items-center gap-2 px-3 py-1 text-xs font-bold rounded-full",
-                      plan.status === 'active' ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                      plan.status === 1 ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
                     )}>
-                      {plan.status?.toUpperCase() || 'INACTIVE'}
+                      {plan.status === 1 ? 'ACTIVE' : 'INACTIVE'}
                     </div>
                   </div>
-
+ 
                   <div className="space-y-2 mb-8">
-                    <h3 className="text-2xl font-bold">{plan.name}</h3>
+                    <h3 className="text-2xl font-bold">{plan.plan_name}</h3>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold">${plan.price}</span>
-                      <span className="text-muted-foreground">/ {plan.duration_days} days</span>
+                      <span className="text-3xl font-bold">${plan.plan_price}</span>
+                      <span className="text-muted-foreground">/ {plan.plan_duration}</span>
                     </div>
                   </div>
 
                   <div className="space-y-4 flex-1">
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                    <p className="text-sm text-muted-foreground">{plan.plan_description}</p>
                     <div className="flex items-center gap-3 text-sm">
                       <Check className="w-4 h-4 text-green-500" />
                       <span>Standard Quality</span>
@@ -83,7 +83,7 @@ export default function SubscriptionsPage() {
                       Edit Plan
                     </button>
                     <button className="flex-1 py-2 rounded-xl text-sm font-semibold text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors">
-                      {plan.status === 'active' ? 'Disable' : 'Enable'}
+                      {plan.status === 1 ? 'Disable' : 'Enable'}
                     </button>
                   </div>
                 </div>

@@ -64,8 +64,8 @@ export default function UsersPage() {
       header: 'Status',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${row.original.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span className="capitalize">{row.original.status}</span>
+          <div className={`w-2 h-2 rounded-full ${row.original.status === '1' ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className="capitalize">{row.original.status === '1' ? 'Active' : 'Inactive'}</span>
         </div>
       )
     },
