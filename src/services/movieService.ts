@@ -1,28 +1,74 @@
 import apiClient from '@/lib/api-client';
 
+export interface MovieMedia {
+  url: string;
+  alt: string;
+}
+
 export interface Movie {
   id: number;
+  title: string;
   movie_name: string;
   slug: string;
-  movie_poster: string;
+  shortDescription?: string;
   movie_desc?: string;
-  movie_trailer?: string;
-  movie_video?: string;
-  genre?: string;
-  cast_name?: string;
-  director_name?: string;
-  rating?: string;
-  duration?: string;
+  longDescription?: string;
+  releaseYear?: number;
   release_date?: string;
-  title?: string; // fallback
-  movie_image?: string; // fallback
-  created_at?: string;
-  updated_at?: string;
-  featured?: boolean;
-  view_count?: number;
-  type?: string;
-  movie_type?: string;
+  countryId?: number;
+  rating?: number;
+  genreId?: number;
+  genre_name?: string;
+  ageGroup?: string | null;
+  actors?: string;
+  cast_name?: string;
+  director?: string;
+  director_name?: string;
+  isFeatured?: boolean;
+  isFree?: boolean;
+  movieType?: string | null;
+  contentType?: string | null;
+  ageRestriction?: string | null;
+  kidsRestriction?: boolean;
+  duration?: string;
+  languages?: string;
+  viewCount?: number;
+  isInteractive?: boolean;
+  interactiveMap?: unknown;
+  media?: {
+    image?: MovieMedia;
+    card_image?: MovieMedia;
+    video?: MovieMedia;
+    trailer?: MovieMedia;
+  };
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+// Payload shape for creating / updating movies
+export interface MoviePayload {
+  title: string;
+  slug: string;
+  description_short: string;
+  description_long: string;
+  year: number;
+  duration: string;
+  rating: number;
+  genre_id?: number;
+  country_id?: number;
+  actors: string;
+  director: string;
+  languages?: string;
+  featured: boolean;
+  free: boolean;
+  is_interactive?: boolean;
+  movie_image: string;
+  card_image?: string;
+  url: string;
+  trailer_url?: string;
+  trailer_alt?: string;
+}
+
 
 export const movieService = {
   getAll: async () => {
@@ -35,12 +81,12 @@ export const movieService = {
     return response.data.data;
   },
   
-  create: async (data: Partial<Movie>) => {
+  create: async (data: Partial<MoviePayload>) => {
     const response = await apiClient.post<{ status: boolean; data: Movie }>('/movies', data);
     return response.data.data;
   },
   
-  update: async (id: number, data: Partial<Movie>) => {
+  update: async (id: number, data: Partial<MoviePayload>) => {
     const response = await apiClient.put<{ status: boolean; data: Movie }>(`/movies/${id}`, data);
     return response.data.data;
   },

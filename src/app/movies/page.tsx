@@ -47,7 +47,7 @@ export default function MoviesPage() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-14 bg-muted rounded overflow-hidden relative group">
             <img 
-              src={row.original.movie_poster || 'https://via.placeholder.com/150'} 
+              src={row.original.media?.image?.url || 'https://via.placeholder.com/150'} 
               alt={row.original.movie_name}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             />
@@ -57,47 +57,47 @@ export default function MoviesPage() {
           </div>
           <div>
             <div className="font-semibold text-sm">{row.original.movie_name}</div>
-            <div className="text-xs text-muted-foreground">{row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
+            <div className="text-xs text-muted-foreground">{row.original.releaseYear || row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
           </div>
         </div>
       ),
     },
     {
-      accessorKey: 'type',
-      header: 'Genre/Type',
+      accessorKey: 'genre_name',
+      header: 'Genre',
       cell: ({ row }) => (
         <span className="capitalize text-xs font-medium px-2 py-1 bg-muted rounded-full">
-          {row.original.type || 'Action'}
+          {row.original.genre_name || 'N/A'}
         </span>
       ),
     },
     {
-      accessorKey: 'view_count',
+      accessorKey: 'viewCount',
       header: 'Views',
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5 font-medium">
           <Eye className="w-4 h-4 text-muted-foreground" />
-          {(row.original.view_count || 0).toLocaleString()}
+          {(row.original.viewCount || 0).toLocaleString()}
         </div>
       ),
     },
     {
-      accessorKey: 'featured',
+      accessorKey: 'isFeatured',
       header: 'Featured',
       cell: ({ row }) => (
         <div className={cn(
           "inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded",
-          row.original.featured ? "text-amber-500 bg-amber-500/10" : "text-muted-foreground bg-muted"
+          row.original.isFeatured ? "text-amber-500 bg-amber-500/10" : "text-muted-foreground bg-muted"
         )}>
-          <Star className={cn("w-3 h-3", row.original.featured && "fill-current")} />
-          {row.original.featured ? 'YES' : 'NO'}
+          <Star className={cn("w-3 h-3", row.original.isFeatured && "fill-current")} />
+          {row.original.isFeatured ? 'YES' : 'NO'}
         </div>
       ),
     },
     {
-      accessorKey: 'created_at',
+      accessorKey: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.created_at)}</span>,
+      cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span>,
     },
     {
       id: 'actions',

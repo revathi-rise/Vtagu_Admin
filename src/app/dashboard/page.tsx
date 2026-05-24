@@ -59,12 +59,12 @@ export default function DashboardPage() {
 
       const activeSubs = subscriptions.filter(s => s.status === 'active').length;
       const totalRevenue = subscriptions.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
-      const totalViews = movies.reduce((acc, curr) => acc + (curr.view_count || 0), 0);
-      const totalSeries = movies.filter(m => m.movie_type?.toLowerCase() === 'series').length;
+      const totalViews = movies.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
+      const totalSeries = movies.filter(m => m.movieType?.toLowerCase() === 'series').length;
 
       setStats([
         { label: 'Total Users', value: (users?.length || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
-        { label: 'Total Movies', value: movies.filter(m => m.movie_type?.toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
+        { label: 'Total Movies', value: movies.filter(m => m.movieType?.toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
         { label: 'Total Series', value: totalSeries.toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
         { label: 'Active Subs', value: activeSubs.toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
         { label: 'Revenue', value: formatCurrency(totalRevenue), icon: TrendingUp, trend: '+0%', isUp: true },
@@ -129,18 +129,18 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-14 bg-muted rounded-md overflow-hidden relative">
                       <img 
-                        src={movie.movie_poster || movie.movie_image || 'https://via.placeholder.com/150'} 
+                        src={movie.media?.image?.url || 'https://via.placeholder.com/150'} 
                         alt={movie.movie_name || movie.title} 
                         className="w-full h-full object-cover" 
                       />
                     </div>
                     <div>
                       <p className="font-medium">{movie.movie_name || movie.title}</p>
-                      <p className="text-xs text-muted-foreground">{movie.type} • {movie.duration}</p>
+                      <p className="text-xs text-muted-foreground">{movie.genre_name || 'N/A'} • {movie.duration}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{(movie.view_count || 0).toLocaleString()}</p>
+                    <p className="font-semibold">{(movie.viewCount || 0).toLocaleString()}</p>
                     <p className="text-xs text-muted-foreground">Views</p>
                   </div>
                 </div>

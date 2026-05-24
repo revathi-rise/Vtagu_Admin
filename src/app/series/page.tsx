@@ -21,7 +21,7 @@ export default function SeriesPage() {
       setIsLoading(true);
       setError(null);
       const allMovies = await movieService.getAll();
-      const onlySeries = (allMovies || []).filter(m => m.movie_type?.toLowerCase() === 'series');
+      const onlySeries = (allMovies || []).filter(m => m.movieType?.toLowerCase() === 'series');
       setSeries(onlySeries);
     } catch (err: any) {
       console.error('Failed to fetch series:', err);
