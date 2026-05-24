@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { formatDate } from '@/lib/utils';
-import { PlayCircle, Plus, Loader2, AlertCircle, Film, Edit, Trash2 } from 'lucide-react';
+import { PlayCircle, Plus, Loader2, AlertCircle, Film, Edit, Trash2, Eye, Star } from 'lucide-react';
 import { episodeService, Episode } from '@/services/episodeService';
+import { cn } from '@/lib/utils';
 
 export default function EpisodesPage() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -37,9 +38,9 @@ export default function EpisodesPage() {
       header: 'Episode',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-12 h-8 bg-muted rounded overflow-hidden relative">
-            {row.original.image ? (
-              <img src={row.original.image} alt={row.original.title} className="w-full h-full object-cover" />
+          <div className="w-14 h-10 bg-muted rounded-lg overflow-hidden relative flex-shrink-0">
+            {row.original.media?.image?.url ? (
+              <img src={row.original.media.image.url} alt={row.original.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <PlayCircle className="w-4 h-4" />
@@ -48,20 +49,52 @@ export default function EpisodesPage() {
           </div>
           <div>
             <div className="font-semibold text-sm">{row.original.title}</div>
-            <div className="text-xs text-muted-foreground">Ep {row.original.episode_number} • {row.original.duration}</div>
+            <div className="text-xs text-muted-foreground">Ep {row.original.episode_number} • {row.original.duration || 'N/A'}</div>
           </div>
         </div>
       ),
     },
     {
-      accessorKey: 'seasonId',
-      header: 'Season ID',
-      cell: ({ row }) => <span className="text-sm font-medium">Season {row.original.seasonId}</span>
+      accessorKey: 'season_id',
+      header: 'Season',
+      cell: ({ row }) => <span className="text-sm font-medium px-2 py-1 bg-muted rounded-full">Season {row.original.season_id}</span>,
     },
     {
-      accessorKey: 'created_at',
+      accessorKey: 'rating',
+      header: 'Rating',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+          <span className="text-sm font-medium">{row.original.rating ?? 'N/A'}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'viewCount',
+      header: 'Views',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5 text-sm">
+          <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+          {(row.original.viewCount ?? 0).toLocaleString()}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'isFeatured',
+      header: 'Featured',
+      cell: ({ row }) => (
+        <span className={cn(
+          'inline-flex items-center text-xs font-bold px-2 py-0.5 rounded',
+          row.original.isFeatured ? 'text-amber-500 bg-amber-500/10' : 'text-muted-foreground bg-muted'
+        )}>
+          {row.original.isFeatured ? 'YES' : 'NO'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => <span className="text-muted-foreground">{row.original.created_at ? formatDate(row.original.created_at) : 'N/A'}</span>,
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.createdAt ? formatDate(row.original.createdAt) : 'N/A'}</span>,
     },
     {
       id: 'actions',
@@ -70,8 +103,8 @@ export default function EpisodesPage() {
           <button className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-lg transition-colors">
             <Edit className="w-4 h-4" />
           </button>
-          <button 
-            onClick={() => handleDelete(row.original.episodeId)}
+          <button
+            onClick={() => handleDelete(row.original.id)}
             className="p-2 hover:bg-muted text-muted-foreground hover:text-destructive rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
@@ -83,10 +116,9 @@ export default function EpisodesPage() {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this episode?')) return;
-    
     try {
       await episodeService.delete(id);
-      setEpisodes(prev => prev.filter(e => e.episodeId !== id));
+      setEpisodes(prev => prev.filter(e => e.id !== id));
     } catch (error) {
       console.error('Failed to delete episode:', error);
       alert('Failed to delete episode.');

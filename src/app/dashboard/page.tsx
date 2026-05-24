@@ -60,11 +60,11 @@ export default function DashboardPage() {
       const activeSubs = subscriptions.filter(s => s.status === 'active').length;
       const totalRevenue = subscriptions.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
       const totalViews = movies.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
-      const totalSeries = movies.filter(m => m.movieType?.toLowerCase() === 'series').length;
+      const totalSeries = movies.filter(m => String(m.movieType || '').toLowerCase() === 'series').length;
 
       setStats([
         { label: 'Total Users', value: (users?.length || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
-        { label: 'Total Movies', value: movies.filter(m => m.movieType?.toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
+        { label: 'Total Movies', value: movies.filter(m => String(m.movieType || '').toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
         { label: 'Total Series', value: totalSeries.toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
         { label: 'Active Subs', value: activeSubs.toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
         { label: 'Revenue', value: formatCurrency(totalRevenue), icon: TrendingUp, trend: '+0%', isUp: true },
