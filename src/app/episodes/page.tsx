@@ -39,8 +39,8 @@ export default function EpisodesPage() {
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div className="w-14 h-10 bg-muted rounded-lg overflow-hidden relative flex-shrink-0">
-            {row.original.media?.image?.url ? (
-              <img src={row.original.media.image.url} alt={row.original.title} className="w-full h-full object-cover" />
+            {row.original.media?.poster_image?.url ? (
+              <img src={row.original.media.poster_image.url} alt={row.original.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <PlayCircle className="w-4 h-4" />

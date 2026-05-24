@@ -32,7 +32,7 @@ export default function ProfilePage() {
           <div className="w-full space-y-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground italic">Admin ID</span>
-              <span className="font-mono text-xs">{user?.id || 'ADM-8821'}</span>
+              <span className="font-mono text-xs">ADM-{user?.userId || '8821'}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground italic">Last Login</span>
