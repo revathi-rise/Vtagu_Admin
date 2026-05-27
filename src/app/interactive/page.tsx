@@ -1,192 +1,1192 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   GitBranch, 
   Plus, 
   Trash2, 
+  Edit, 
   Play, 
   Save, 
-  Clock,
-  ChevronRight
+  Clock, 
+  ChevronRight, 
+  X, 
+  Loader2, 
+  AlertCircle, 
+  RefreshCw, 
+  Film, 
+  ArrowRight,
+  Sparkles,
+  Upload,
+  Eye,
+  Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface Choice {
-  id: string;
-  label: string;
-  next_video_url: string;
-}
-
-interface Node {
-  id: string;
-  timestamp: string;
-  choices: Choice[];
-}
+import { sceneService, Scene, Choice } from '@/services/sceneService';
+import { interactiveMovieService, InteractiveMovie } from '@/services/interactiveMovieService';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
+import apiClient from '@/lib/api-client';
 
 export default function InteractiveEditorPage() {
-  const [nodes, setNodes] = useState<Node[]>([
-    {
-      id: '1',
-      timestamp: '02:10',
-      choices: [
-        { id: 'c1', label: 'Go to the Forest', next_video_url: 'forest_clip.mp4' },
-        { id: 'c2', label: 'Stay at the Bridge', next_video_url: 'bridge_clip.mp4' }
-      ]
+  const [movies, setMovies] = useState<InteractiveMovie[]>([]);
+  const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
+  const [manualMovieId, setManualMovieId] = useState<string>('');
+  const [useManualId, setUseManualId] = useState(false);
+  
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [isLoadingMovies, setIsLoadingMovies] = useState(true);
+  const [isLoadingScenes, setIsLoadingScenes] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Scene Modal state
+  const [isSceneModalOpen, setIsSceneModalOpen] = useState(false);
+  const [editingScene, setEditingScene] = useState<Scene | null>(null);
+  const [sceneName, setSceneName] = useState('');
+  const [sceneUrl, setSceneUrl] = useState('');
+
+  // Scene Preview Modal state
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewScene, setPreviewScene] = useState<Scene | null>(null);
+  
+  // Choice Modal state
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
+  const [editingChoice, setEditingChoice] = useState<Choice | null>(null);
+  const [currentChoiceSceneId, setCurrentChoiceSceneId] = useState<number | null>(null);
+  const [choiceText, setChoiceText] = useState('');
+  const [choiceTargetSceneId, setChoiceTargetSceneId] = useState<string>('');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Movie Modal state
+  const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
+  const [editingMovieObj, setEditingMovieObj] = useState<InteractiveMovie | null>(null);
+  const [movieTitle, setMovieTitle] = useState('');
+  const [movieDescription, setMovieDescription] = useState('');
+  const [movieBanner, setMovieBanner] = useState('');
+  const [movieCard, setMovieCard] = useState('');
+  const [movieTrailer, setMovieTrailer] = useState('');
+
+  // Image Upload / Cropping state for Movie Modal
+  const [isMovieUploading, setIsMovieUploading] = useState(false);
+  const [movieCropModalData, setMovieCropModalData] = useState<{
+    file: File;
+    field: 'banner_image' | 'card_image';
+    aspectRatio: number;
+  } | null>(null);
+  const [movieLightboxUrl, setMovieLightboxUrl] = useState<string | null>(null);
+
+  // Custom Delete Confirmation Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalTitle, setDeleteModalTitle] = useState('');
+  const [deleteModalMessage, setDeleteModalMessage] = useState('');
+  const [onDeleteConfirm, setOnDeleteConfirm] = useState<(() => void) | null>(null);
+
+  const confirmDelete = (title: string, message: string, onConfirm: () => void) => {
+    setDeleteModalTitle(title);
+    setDeleteModalMessage(message);
+    setOnDeleteConfirm(() => onConfirm);
+    setIsDeleteModalOpen(true);
+  };
+
+  useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  const fetchMovies = async () => {
+    try {
+      setIsLoadingMovies(true);
+      setError(null);
+      const data = await interactiveMovieService.getAll();
+      setMovies(data || []);
+      if (data && data.length > 0) {
+        const id = data[0].interactive_movie_id || (data[0] as any).id;
+        setSelectedMovieId(Number(id));
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch interactive movies:', err);
+      // Don't set global error yet so user can use manual ID
+      setUseManualId(true);
+    } finally {
+      setIsLoadingMovies(false);
     }
-  ]);
-
-  const addNode = () => {
-    setNodes([...nodes, { 
-      id: Date.now().toString(), 
-      timestamp: '00:00', 
-      choices: [{ id: Date.now().toString() + 'c', label: '', next_video_url: '' }] 
-    }]);
   };
 
-  const removeNode = (id: string) => setNodes(nodes.filter(n => n.id !== id));
-
-  const updateNode = (id: string, timestamp: string) => {
-    setNodes(nodes.map(n => n.id === id ? { ...n, timestamp } : n));
+  const loadScenes = async (movieId: number) => {
+    if (!movieId) return;
+    try {
+      setIsLoadingScenes(true);
+      setError(null);
+      const data = await sceneService.getByMovieId(movieId);
+      setScenes(data || []);
+    } catch (err: any) {
+      console.error('Failed to load scenes:', err);
+      setError('Could not load scenes for this movie. Please try again.');
+      setScenes([]);
+    } finally {
+      setIsLoadingScenes(false);
+    }
   };
 
-  const updateChoice = (nodeId: string, choiceId: string, field: keyof Choice, value: string) => {
-    setNodes(nodes.map(n => {
-      if (n.id === nodeId) {
-        return {
-          ...n,
-          choices: n.choices.map(c => c.id === choiceId ? { ...c, [field]: value } : c)
-        };
+  useEffect(() => {
+    const activeId = useManualId ? Number(manualMovieId) : selectedMovieId;
+    if (activeId && !isNaN(activeId)) {
+      loadScenes(activeId);
+    } else {
+      setScenes([]);
+    }
+  }, [selectedMovieId, manualMovieId, useManualId]);
+
+  const handleMovieSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === 'manual') {
+      setUseManualId(true);
+    } else {
+      setUseManualId(false);
+      setSelectedMovieId(Number(val));
+    }
+  };
+
+  // --- MOVIE CRUD ACTIONS ---
+  const handleOpenAddMovie = () => {
+    setEditingMovieObj(null);
+    setMovieTitle('');
+    setMovieDescription('');
+    setMovieBanner('');
+    setMovieCard('');
+    setMovieTrailer('');
+    setIsMovieModalOpen(true);
+  };
+
+  const handleOpenEditMovie = () => {
+    const movie = movies.find(m => m.interactive_movie_id === selectedMovieId);
+    if (!movie) return;
+    setEditingMovieObj(movie);
+    setMovieTitle(movie.title || '');
+    setMovieDescription(movie.description || '');
+    setMovieBanner(movie.banner_image || '');
+    setMovieCard(movie.card_image || '');
+    setMovieTrailer(movie.trailer_video_url || '');
+    setIsMovieModalOpen(true);
+  };
+
+  const handleSaveMovie = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!movieTitle.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        title: movieTitle.trim(),
+        description: movieDescription.trim(),
+        banner_image: movieBanner.trim() || undefined,
+        card_image: movieCard.trim() || undefined,
+        trailer_video_url: movieTrailer.trim() || undefined,
+      };
+
+      if (editingMovieObj) {
+        const updated = await interactiveMovieService.update(editingMovieObj.interactive_movie_id, payload);
+        setMovies(prev => prev.map(m => m.interactive_movie_id === editingMovieObj.interactive_movie_id ? updated : m));
+      } else {
+        const created = await interactiveMovieService.create(payload);
+        setMovies(prev => [...prev, created]);
+        setSelectedMovieId(created.interactive_movie_id);
+        setUseManualId(false);
       }
-      return n;
-    }));
+      setIsMovieModalOpen(false);
+    } catch (err) {
+      console.error('Failed to save movie:', err);
+      alert('Error saving movie. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const addChoice = (nodeId: string) => {
-    setNodes(nodes.map(n => {
-      if (n.id === nodeId) {
-        return {
-          ...n,
-          choices: [...n.choices, { id: Date.now().toString(), label: '', next_video_url: '' }]
-        };
+  const handleDeleteMovie = async () => {
+    if (!selectedMovieId) return;
+    const movie = movies.find(m => m.interactive_movie_id === selectedMovieId);
+    if (!movie) return;
+
+    confirmDelete(
+      'Delete Interactive Movie',
+      `Are you sure you want to delete the movie "${movie.title}"? This will permanently delete all of its scenes and branching choices!`,
+      async () => {
+        try {
+          await interactiveMovieService.delete(selectedMovieId);
+          const remainingMovies = movies.filter(m => m.interactive_movie_id !== selectedMovieId);
+          setMovies(remainingMovies);
+          if (remainingMovies.length > 0) {
+            setSelectedMovieId(remainingMovies[0].interactive_movie_id);
+          } else {
+            setSelectedMovieId(null);
+            setUseManualId(true);
+          }
+        } catch (err) {
+          console.error('Failed to delete movie:', err);
+          alert('Could not delete movie.');
+        }
       }
-      return n;
-    }));
+    );
   };
+
+  const handleMovieFileSelect = (e: React.ChangeEvent<HTMLInputElement>, field: 'banner_image' | 'card_image') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setMovieCropModalData({
+      file,
+      field,
+      aspectRatio: field === 'banner_image' ? 16 / 9 : 3 / 4
+    });
+  };
+
+  const handleMovieCropComplete = async (croppedBlob: Blob) => {
+    if (!movieCropModalData) return;
+    const formData = new FormData();
+    formData.append('file', croppedBlob, 'cropped-image.jpg');
+    setIsMovieUploading(true);
+    try {
+      const res = await apiClient.post<{ status: boolean; message: string; url: string }>(
+        '/upload-image',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000
+        }
+      );
+      if (res.data.status && res.data.url) {
+        if (movieCropModalData.field === 'banner_image') {
+          setMovieBanner(res.data.url);
+        } else {
+          setMovieCard(res.data.url);
+        }
+        setMovieCropModalData(null);
+      } else {
+        alert(res.data.message || 'Upload failed.');
+      }
+    } catch (err: any) {
+      console.error('Movie image upload error:', err);
+      alert(err.response?.data?.message || 'Upload failed.');
+    } finally {
+      setIsMovieUploading(false);
+    }
+  };
+
+  function MovieImageUploader({ 
+    field, 
+    id, 
+    label, 
+    aspect 
+  }: {
+    field: 'banner_image' | 'card_image'; 
+    id: string; 
+    label: string; 
+    aspect: '16:9' | '3:4';
+  }) {
+    const url = field === 'banner_image' ? movieBanner : movieCard;
+    const setUrl = field === 'banner_image' ? setMovieBanner : setMovieCard;
+
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium">{label}</label>
+        <div className={cn(
+          'relative rounded-2xl overflow-hidden border border-border/80 bg-muted/20 flex flex-col items-center justify-center transition-all group',
+          aspect === '16:9' ? 'w-full aspect-video' : 'aspect-[3/4] w-full max-w-[180px] mx-auto'
+        )}>
+          {url ? (
+            <>
+              <img src={url} alt={label} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setMovieLightboxUrl(url)} 
+                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/20 transition-all hover:scale-105"
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => document.getElementById(id)?.click()} 
+                  className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full border border-white/20 transition-all hover:scale-105"
+                >
+                  <Upload className="w-5 h-5" />
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setUrl('')} 
+                  className="p-3 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full border border-red-500/30 transition-all hover:scale-105"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div 
+              onClick={() => document.getElementById(id)?.click()} 
+              className="cursor-pointer absolute inset-0 flex flex-col items-center justify-center border-2 border-dashed border-border/80 hover:border-primary/50 rounded-2xl hover:bg-muted/20 transition-all w-full h-full p-4"
+            >
+              {isMovieUploading && movieCropModalData?.field === field ? (
+                <Loader2 className="w-8 h-8 animate-spin text-primary mb-2" />
+              ) : (
+                <ImageIcon className="w-8 h-8 text-muted-foreground/60 mb-2 group-hover:text-primary transition-colors" />
+              )}
+              <p className="text-xs font-semibold text-white/90 text-center">
+                {isMovieUploading && movieCropModalData?.field === field ? 'Uploading...' : `Upload ${label}`}
+              </p>
+            </div>
+          )}
+        </div>
+        <input 
+          type="file" 
+          id={id} 
+          onChange={(e) => handleMovieFileSelect(e, field)} 
+          accept="image/*" 
+          className="hidden" 
+        />
+      </div>
+    );
+  }
+
+  // --- SCENE CRUD ACTIONS ---
+  const handleOpenAddScene = () => {
+    setEditingScene(null);
+    setSceneName('');
+    setSceneUrl('');
+    setIsSceneModalOpen(true);
+  };
+
+  const handleOpenEditScene = (scene: Scene) => {
+    setEditingScene(scene);
+    setSceneName(scene.scene_text);
+    setSceneUrl(scene.poster_url);
+    setIsSceneModalOpen(true);
+  };
+
+  const handleSaveScene = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
+    if (!activeMovieId || isNaN(activeMovieId)) {
+      alert('Please select or input a valid Movie ID first.');
+      return;
+    }
+    if (!sceneName.trim() || !sceneUrl.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      if (editingScene) {
+        // Update Scene
+        const updated = await sceneService.updateScene(editingScene.scene_id, {
+          scene_name: sceneName.trim(),
+          scene_url: sceneUrl.trim()
+        });
+        // Reload list
+        loadScenes(activeMovieId);
+      } else {
+        // Create Scene
+        await sceneService.createScene({
+          movie_id: activeMovieId,
+          scene_name: sceneName.trim(),
+          scene_url: sceneUrl.trim()
+        });
+        loadScenes(activeMovieId);
+      }
+      setIsSceneModalOpen(false);
+    } catch (err) {
+      console.error('Failed to save scene:', err);
+      alert('Error saving scene. Verify your backend endpoint and payload format.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteScene = async (sceneId: number) => {
+    const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
+    confirmDelete(
+      'Delete Decision Scene',
+      'Are you sure you want to delete this scene? Deleting a scene will automatically delete all decisions branching out from it.',
+      async () => {
+        try {
+          await sceneService.deleteScene(sceneId);
+          if (activeMovieId) loadScenes(activeMovieId);
+        } catch (err) {
+          console.error('Failed to delete scene:', err);
+          alert('Could not delete scene. Please try again.');
+        }
+      }
+    );
+  };
+
+  // --- CHOICE CRUD ACTIONS ---
+  const handleOpenAddChoice = (sceneId: number) => {
+    setEditingChoice(null);
+    setCurrentChoiceSceneId(sceneId);
+    setChoiceText('');
+    setChoiceTargetSceneId('');
+    setIsChoiceModalOpen(true);
+  };
+
+  const handleOpenEditChoice = (choice: Choice, sceneId: number) => {
+    setEditingChoice(choice);
+    setCurrentChoiceSceneId(sceneId);
+    setChoiceText(choice.choice_text || choice.button_text || '');
+    setChoiceTargetSceneId(
+      choice.next_scene_id
+        ? choice.next_scene_id.toString()
+        : choice.target_scene
+          ? choice.target_scene.toString()
+          : ''
+    );
+    setIsChoiceModalOpen(true);
+  };
+
+  const handleSaveChoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!choiceText.trim() || !currentChoiceSceneId) return;
+    const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
+
+    setIsSubmitting(true);
+    try {
+      const targetSceneVal = choiceTargetSceneId ? Number(choiceTargetSceneId) : null;
+
+      if (editingChoice) {
+        // Update Choice
+        await sceneService.updateChoice({
+          choice_id: editingChoice.choice_id,
+          button_text: choiceText.trim(),
+          target_scene: targetSceneVal
+        });
+      } else {
+        // Create Choice
+        await sceneService.createChoice({
+          scene_id: currentChoiceSceneId,
+          button_text: choiceText.trim(),
+          target_scene: targetSceneVal
+        });
+      }
+      
+      if (activeMovieId) loadScenes(activeMovieId);
+      setIsChoiceModalOpen(false);
+    } catch (err) {
+      console.error('Failed to save choice:', err);
+      alert('Error saving choice. Ensure target scene ID is valid.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteChoice = async (choiceId: number) => {
+    const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
+    confirmDelete(
+      'Delete Decision Choice',
+      'Are you sure you want to delete this decision choice?',
+      async () => {
+        try {
+          await sceneService.deleteChoice(choiceId);
+          if (activeMovieId) loadScenes(activeMovieId);
+        } catch (err) {
+          console.error('Failed to delete choice:', err);
+          alert('Could not delete choice.');
+        }
+      }
+    );
+  };
+
+  const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-20">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-6xl mx-auto pb-20 text-white">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+          <div className="p-3 bg-primary/10 rounded-2xl text-primary shadow-inner">
             <GitBranch className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Interactive Editor</h1>
-            <p className="text-muted-foreground mt-1">Configure branching paths and decision timelines.</p>
+            <h1 className="text-3xl font-bold tracking-tight bg-brand-gradient bg-clip-text text-transparent">Interactive Video Timeline Editor</h1>
+            <p className="text-muted-foreground mt-1 text-sm">Configure scenes and branching choices for your interactive movie flow.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="px-5 py-2.5 bg-muted rounded-xl font-semibold border border-border flex items-center gap-2">
-            <Play className="w-4 h-4" />
-            Preview
+        
+        {/* Movie Selector controls */}
+        <div className="flex items-center gap-3 bg-card border border-border/80 p-3 rounded-2xl shadow-lg">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Select Interactive Movie</span>
+            {useManualId ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Enter Movie ID"
+                  value={manualMovieId}
+                  onChange={(e) => setManualMovieId(e.target.value)}
+                  className="bg-background border border-border rounded-xl px-3 py-1.5 text-sm w-36 outline-none focus:ring-2 ring-primary/20 text-white"
+                />
+                <button 
+                  onClick={() => setUseManualId(false)}
+                  className="text-xs text-primary hover:underline font-semibold"
+                >
+                  List Movies
+                </button>
+              </div>
+            ) : (
+              <select
+                onChange={handleMovieSelectChange}
+                value={selectedMovieId || ''}
+                className="bg-background border border-border rounded-xl px-3 py-1.5 text-sm outline-none text-white font-medium cursor-pointer"
+              >
+                {isLoadingMovies ? (
+                  <option>Loading movie titles...</option>
+                ) : movies.length > 0 ? (
+                  <>
+                    {movies.map(m => (
+                      <option key={m.interactive_movie_id} value={m.interactive_movie_id}>
+                        {m.title || (m as any).movie_name || `Movie #${m.interactive_movie_id}`}
+                      </option>
+                    ))}
+                    <option value="manual">Type Movie ID manually...</option>
+                  </>
+                ) : (
+                  <option value="manual">No interactive movies. Type manually...</option>
+                )}
+              </select>
+            )}
+          </div>
+          <button 
+            onClick={() => activeMovieId && loadScenes(activeMovieId)} 
+            disabled={isLoadingScenes}
+            className="p-2 border border-border hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-all active:scale-95 disabled:opacity-50"
+            title="Refresh Scenes"
+          >
+            <RefreshCw className={cn("w-4 h-4", isLoadingScenes && "animate-spin text-primary")} />
           </button>
-          <button className="px-5 py-2.5 bg-brand-gradient text-white rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20">
-            <Save className="w-4 h-4" />
-            Save Configuration
+
+          <div className="h-6 w-px bg-border/60" />
+          
+          <button 
+            onClick={handleOpenAddMovie}
+            className="p-2 border border-border hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-all active:scale-95"
+            title="Create New Interactive Movie"
+          >
+            <Plus className="w-4 h-4" />
           </button>
+
+          {!useManualId && selectedMovieId && (
+            <>
+              <button 
+                onClick={handleOpenEditMovie}
+                className="p-2 border border-border hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-all active:scale-95"
+                title="Edit Movie Details"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={handleDeleteMovie}
+                className="p-2 border border-border hover:bg-muted text-muted-foreground hover:text-destructive rounded-xl transition-all active:scale-95"
+                title="Delete Movie"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="space-y-6">
-        {nodes.length > 0 ? (
-          nodes.map((node, index) => (
-            <div key={node.id} className="relative group">
-              {index !== nodes.length - 1 && (
-                <div className="absolute left-10 top-full h-6 w-0.5 bg-border -z-10" />
-              )}
-              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:border-primary/50 transition-colors">
-                <div className="p-4 bg-muted/30 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg">
-                      SPLIT {index + 1}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      At timestamp: 
-                      <input 
-                        type="text" 
-                        value={node.timestamp} 
-                        onChange={(e) => updateNode(node.id, e.target.value)}
-                        className="bg-muted border border-border rounded px-2 py-0.5 text-foreground w-16 outline-none focus:ring-1 ring-primary"
-                      />
-                    </div>
-                  </div>
-                  <button onClick={() => removeNode(node.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
-                <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {node.choices.map((choice, i) => (
-                      <div key={choice.id} className="p-4 bg-muted/50 rounded-xl border border-border space-y-3 relative group/choice">
-                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Choice {i + 1}</div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium">Text Label</label>
-                          <input 
-                            placeholder="e.g. Enter the Cave"
-                            className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 ring-primary"
-                            value={choice.label}
-                            onChange={(e) => updateChoice(node.id, choice.id, 'label', e.target.value)}
-                          />
+      {/* Main Grid Workspace */}
+      <div className="grid grid-cols-1 gap-8">
+        
+        {/* Active Workspace */}
+        {!activeMovieId ? (
+          <div className="text-center py-20 bg-card/30 border-2 border-dashed border-border rounded-3xl">
+            <Film className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+            <h3 className="text-lg font-semibold">Select a Movie to Start Editing</h3>
+            <p className="text-muted-foreground max-w-sm mx-auto mt-2 text-sm">
+              Please choose a movie from the selector above, or insert a manual movie ID to edit branching timelines.
+            </p>
+          </div>
+        ) : isLoadingScenes ? (
+          <div className="flex flex-col items-center justify-center py-24 bg-card/20 rounded-3xl border border-border/50">
+            <Loader2 className="w-10 h-10 animate-spin text-primary mb-3" />
+            <p className="text-sm text-muted-foreground">Loading video branching timeline...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            
+            {/* Header controls for workspace */}
+            <div className="flex items-center justify-between bg-muted/20 px-5 py-4 border border-border/40 rounded-2xl">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Editing timeline of Movie ID: <strong className="text-white">{activeMovieId}</strong>
+                </span>
+              </div>
+              <button 
+                onClick={handleOpenAddScene}
+                className="bg-brand-gradient text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Add Decision Scene
+              </button>
+            </div>
+
+            {/* Scenes Timeline */}
+            <div className="space-y-6 relative">
+              {scenes.length > 0 ? (
+                scenes.map((scene, index) => (
+                  <div key={scene.scene_id} className="relative group">
+                    {/* Visual branch linker line */}
+                    {index !== scenes.length - 1 && (
+                      <div className="absolute left-8 top-full h-8 w-0.5 bg-border/50 -z-10 group-hover:bg-primary/20 transition-colors" />
+                    )}
+
+                    <div className="bg-card border border-border/80 rounded-2xl overflow-hidden shadow-md hover:border-primary/50 transition-colors">
+                      {/* Scene Header */}
+                      <div className="p-4 bg-muted/40 border-b border-border/40 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <div className="flex items-center gap-2 px-3 py-1 bg-primary/25 border border-primary/45 text-primary text-xs font-bold rounded-lg shadow-sm">
+                            SCENE ID: #{scene.scene_id}
+                          </div>
+                          <h3 className="font-bold text-base text-white">{scene.scene_text}</h3>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium">Next Video Clip</label>
-                          <div className="flex items-center gap-2">
-                            <input 
-                              placeholder="Select clip..."
-                              className="flex-1 bg-card border border-border rounded-lg px-3 py-2 text-sm outline-none"
-                              value={choice.next_video_url}
-                              onChange={(e) => updateChoice(node.id, choice.id, 'next_video_url', e.target.value)}
-                            />
-                            <button className="p-2 border border-border rounded-lg hover:bg-card">
-                              <ChevronRight className="w-4 h-4" />
+                        
+                        {/* Scene Controls */}
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleOpenEditScene(scene)}
+                            className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                            title="Edit Scene Details"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteScene(scene.scene_id)}
+                            className="p-1.5 hover:bg-muted text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                            title="Delete Scene"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Scene Content Body */}
+                      <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        {/* Left column - video url/poster placeholder */}
+                        <div className="lg:col-span-1 bg-background/50 border border-border/60 rounded-xl p-4 flex flex-col justify-between">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Video Asset URL</span>
+                            <p className="text-xs text-zinc-400 break-all font-mono bg-muted/30 px-2 py-1.5 rounded-lg border border-border/20 mb-3">
+                              {scene.poster_url}
+                            </p>
+                            {scene.poster_url && (
+                              <button
+                                onClick={() => {
+                                  setPreviewScene(scene);
+                                  setIsPreviewModalOpen(true);
+                                }}
+                                className="flex items-center justify-center gap-1.5 w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-xl border border-primary/20 hover:border-primary/40 transition-all active:scale-95 cursor-pointer"
+                              >
+                                <Play className="w-3.5 h-3.5 fill-current" />
+                                Preview Scene Video
+                              </button>
+                            )}
+                          </div>
+                          
+                          <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              Interactive trigger
+                            </span>
+                            <span>{scene.choices.length} Branches</span>
+                          </div>
+                        </div>
+
+                        {/* Right columns - Branches/Choices CRUD */}
+                        <div className="lg:col-span-2 space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Branch Choices</span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {scene.choices.map((choice) => (
+                              <div 
+                                key={choice.choice_id} 
+                                className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border/50 space-y-3 relative group/choice transition-all shadow-sm"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <span className="text-[10px] font-bold text-primary tracking-wider uppercase">Path choice</span>
+                                  <div className="flex items-center gap-1 opacity-0 group-hover/choice:opacity-100 transition-opacity">
+                                    <button 
+                                      onClick={() => handleOpenEditChoice(choice, scene.scene_id)}
+                                      className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded transition-colors"
+                                      title="Edit Choice"
+                                    >
+                                      <Edit className="w-3 h-3" />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteChoice(choice.choice_id)}
+                                      className="p-1 hover:bg-muted text-muted-foreground hover:text-destructive rounded transition-colors"
+                                      title="Delete Choice"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <label className="text-[10px] text-muted-foreground">Button Text</label>
+                                  <div className="font-semibold text-sm">{choice.choice_text || choice.button_text}</div>
+                                </div>
+
+                                <div className="space-y-1 pt-1.5 border-t border-border/20 flex items-center justify-between text-xs">
+                                  <span className="text-muted-foreground">Leads to:</span>
+                                  <span className="flex items-center gap-1 text-primary font-semibold">
+                                    {(choice.next_scene_id || choice.target_scene) ? (
+                                      <>
+                                        Scene #{choice.next_scene_id || choice.target_scene}
+                                        <ArrowRight className="w-3 h-3" />
+                                      </>
+                                    ) : (
+                                      <span className="text-muted-foreground italic text-[11px]">End of Flow</span>
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Add Path Button */}
+                            <button 
+                              onClick={() => handleOpenAddChoice(scene.scene_id)}
+                              className="border-2 border-dashed border-border/80 hover:border-primary/50 hover:text-primary rounded-xl flex flex-col items-center justify-center gap-1.5 text-muted-foreground transition-all p-6 active:scale-[0.98] min-h-[110px]"
+                            >
+                              <Plus className="w-5 h-5 text-muted-foreground" />
+                              <span className="text-xs font-semibold">Add decision path</span>
                             </button>
                           </div>
                         </div>
                       </div>
-                    ))}
-                    <button 
-                      onClick={() => addChoice(node.id)}
-                      className="border-2 border-dashed border-border rounded-xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all p-6"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Path
-                    </button>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-20 bg-card border border-dashed border-border rounded-3xl">
+                  <GitBranch className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+                  <h3 className="text-lg font-semibold">No scenes defined yet</h3>
+                  <p className="text-muted-foreground max-w-xs mx-auto mt-2 text-sm">
+                    Click "Add Decision Scene" below to build the interactive sequence.
+                  </p>
                 </div>
-              </div>
+              )}
+
+              {/* Bottom Scene add button */}
+              <button 
+                onClick={handleOpenAddScene}
+                className="w-full py-5 border-2 border-dashed border-border hover:border-primary/50 rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-all active:scale-[0.99]"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="font-semibold text-sm">Add New Scene</span>
+              </button>
             </div>
-          ))
-        ) : (
-          <div className="text-center py-20 bg-card border border-dashed border-border rounded-3xl">
-            <GitBranch className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <h3 className="text-lg font-semibold">No decision nodes yet</h3>
-            <p className="text-muted-foreground max-w-xs mx-auto mt-2">
-              Add your first branching point to start building the interactive experience.
-            </p>
           </div>
         )}
-
-        <button 
-          onClick={addNode}
-          className="w-full py-4 border-2 border-dashed border-border rounded-2xl flex items-center justify-center gap-2 text-muted-foreground hover:text-primary hover:border-primary/50 transition-all"
-        >
-          <Plus className="w-6 h-6" />
-          Add Decision Node
-        </button>
       </div>
+
+      {/* --- SCENE MODAL --- */}
+      {isSceneModalOpen && (
+        <>
+          <div 
+            onClick={() => setIsSceneModalOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
+          />
+
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                {editingScene ? `Edit Scene: #${editingScene.scene_id}` : 'Create Decision Scene'}
+              </h3>
+              <button 
+                onClick={() => setIsSceneModalOpen(false)}
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveScene} className="space-y-5 mt-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Scene Title / Text Description</label>
+                <input 
+                  type="text"
+                  value={sceneName}
+                  onChange={(e) => setSceneName(e.target.value)}
+                  placeholder="e.g. Choose whether to approach or hide"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Video URL / Poster Path</label>
+                <input 
+                  type="text"
+                  value={sceneUrl}
+                  onChange={(e) => setSceneUrl(e.target.value)}
+                  placeholder="e.g. https://domain.com/videos/scene_01.mp4"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setIsSceneModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save Scene'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* --- CHOICE MODAL --- */}
+      {isChoiceModalOpen && (
+        <>
+          <div 
+            onClick={() => setIsChoiceModalOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
+          />
+
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <GitBranch className="w-5 h-5 text-primary" />
+                {editingChoice ? `Edit Path Choice: #${editingChoice.choice_id}` : 'Create Path Choice'}
+              </h3>
+              <button 
+                onClick={() => setIsChoiceModalOpen(false)}
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveChoice} className="space-y-5 mt-5">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Button text label</label>
+                <input 
+                  type="text"
+                  value={choiceText}
+                  onChange={(e) => setChoiceText(e.target.value)}
+                  placeholder="e.g. Turn Left"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Destination target scene</label>
+                <select
+                  value={choiceTargetSceneId}
+                  onChange={(e) => setChoiceTargetSceneId(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white cursor-pointer"
+                >
+                  <option value="">-- Select Destination (End Flow) --</option>
+                  {scenes
+                    .filter(s => s.scene_id !== currentChoiceSceneId)
+                    .map(s => (
+                      <option key={s.scene_id} value={s.scene_id}>
+                        Scene #{s.scene_id}: {s.scene_text}
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setIsChoiceModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save Choice'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* --- MOVIE MODAL --- */}
+      {isMovieModalOpen && (
+        <>
+          <div 
+            onClick={() => setIsMovieModalOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
+          />
+
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white max-h-[95vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Film className="w-5 h-5 text-primary" />
+                {editingMovieObj ? `Edit Interactive Movie Details` : 'Create Interactive Movie'}
+              </h3>
+              <button 
+                onClick={() => setIsMovieModalOpen(false)}
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMovie} className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-5">
+              {/* Left Column - Details */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Movie Title</label>
+                  <input 
+                    type="text"
+                    value={movieTitle}
+                    onChange={(e) => setMovieTitle(e.target.value)}
+                    placeholder="e.g. Journey Of Ashwin"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Description</label>
+                  <textarea 
+                    value={movieDescription}
+                    onChange={(e) => setMovieDescription(e.target.value)}
+                    placeholder="Interactive story description..."
+                    rows={5}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Trailer Video URL</label>
+                  <input 
+                    type="text"
+                    value={movieTrailer}
+                    onChange={(e) => setMovieTrailer(e.target.value)}
+                    placeholder="e.g. https://domain.com/trailers/trailer.mp4"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column - Images */}
+              <div className="space-y-4">
+                <MovieImageUploader 
+                  field="banner_image" 
+                  id="movie-banner-upload" 
+                  label="Banner Image (16:9)" 
+                  aspect="16:9" 
+                />
+
+                <MovieImageUploader 
+                  field="card_image" 
+                  id="movie-card-upload" 
+                  label="Card Image (3:4)" 
+                  aspect="3:4" 
+                />
+              </div>
+
+              {/* Footer Actions */}
+              <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-6 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={() => setIsMovieModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  {isSubmitting ? 'Saving...' : 'Save Movie'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+
+      {/* --- SCENE PREVIEW MODAL --- */}
+      {isPreviewModalOpen && previewScene && (
+        <>
+          <div 
+            onClick={() => {
+              setIsPreviewModalOpen(false);
+              setPreviewScene(null);
+            }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 transition-opacity"
+          />
+
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Play className="w-5 h-5 text-primary fill-current" />
+                Preview Scene: {previewScene.scene_text}
+              </h3>
+              <button 
+                onClick={() => {
+                  setIsPreviewModalOpen(false);
+                  setPreviewScene(null);
+                }}
+                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-col items-center justify-center bg-black/40 rounded-2xl p-2 overflow-hidden aspect-video border border-border/30">
+              <video 
+                src={previewScene.poster_url} 
+                controls 
+                autoPlay
+                className="w-full h-full rounded-xl object-contain shadow-lg"
+              />
+            </div>
+            
+            <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground">
+              <span>Scene ID: #{previewScene.scene_id}</span>
+              <span className="font-mono break-all max-w-[70%]">{previewScene.poster_url}</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Movie Image Cropper Modal */}
+      {movieCropModalData && (
+        <ImageCropperModal
+          imageFile={movieCropModalData.file}
+          aspectRatio={movieCropModalData.aspectRatio}
+          onClose={() => setMovieCropModalData(null)}
+          onCropComplete={handleMovieCropComplete}
+        />
+      )}
+
+      {/* Movie Image Lightbox Preview Modal */}
+      {movieLightboxUrl && (
+        <>
+          <div 
+            onClick={() => setMovieLightboxUrl(null)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] transition-opacity flex items-center justify-center p-4 animate-in fade-in"
+          >
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-xl max-h-[85vh] w-full rounded-2xl overflow-hidden border border-border/50 bg-card shadow-2xl animate-in zoom-in-95 duration-200"
+            >
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <span className="text-sm font-semibold text-white">Image Preview</span>
+                <button 
+                  type="button"
+                  onClick={() => setMovieLightboxUrl(null)}
+                  className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-6 flex items-center justify-center bg-black/40 overflow-hidden max-h-[70vh]">
+                <img 
+                  src={movieLightboxUrl} 
+                  alt="Preview" 
+                  className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300';
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* --- CUSTOM DELETE CONFIRMATION MODAL --- */}
+      {isDeleteModalOpen && (
+        <>
+          <div 
+            onClick={() => setIsDeleteModalOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] transition-opacity"
+          />
+
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-destructive/20 rounded-3xl p-6 shadow-2xl z-[70] animate-in zoom-in-95 duration-200 text-white">
+            <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+              <div className="p-2 bg-destructive/10 text-destructive rounded-xl">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold">{deleteModalTitle}</h3>
+            </div>
+
+            <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+              {deleteModalMessage}
+            </p>
+
+            <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-border/50">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteConfirm) onDeleteConfirm();
+                  setIsDeleteModalOpen(false);
+                }}
+                className="bg-destructive hover:bg-destructive/90 text-white px-5 py-2.5 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-destructive/20 cursor-pointer"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
