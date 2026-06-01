@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { sceneService, Scene, Choice } from '@/services/sceneService';
 import { interactiveMovieService, InteractiveMovie } from '@/services/interactiveMovieService';
+import { languageService, Language } from '@/services/languageService';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import apiClient from '@/lib/api-client';
 
@@ -65,6 +66,8 @@ export default function InteractiveEditorPage() {
   const [movieBanner, setMovieBanner] = useState('');
   const [movieCard, setMovieCard] = useState('');
   const [movieTrailer, setMovieTrailer] = useState('');
+  const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
 
   // Image Upload / Cropping state for Movie Modal
   const [isMovieUploading, setIsMovieUploading] = useState(false);
@@ -90,6 +93,8 @@ export default function InteractiveEditorPage() {
 
   useEffect(() => {
     fetchMovies();
+    // Fetch languages
+    languageService.getAll().then(setAvailableLanguages).catch(console.error);
   }, []);
 
   const fetchMovies = async () => {
@@ -154,6 +159,7 @@ export default function InteractiveEditorPage() {
     setMovieBanner('');
     setMovieCard('');
     setMovieTrailer('');
+    setSelectedLanguages([]);
     setIsMovieModalOpen(true);
   };
 
@@ -166,6 +172,7 @@ export default function InteractiveEditorPage() {
     setMovieBanner(movie.banner_image || '');
     setMovieCard(movie.card_image || '');
     setMovieTrailer(movie.trailer_video_url || '');
+    setSelectedLanguages(movie.languages ? movie.languages.split(',').map(l => l.trim()).filter(Boolean) : []);
     setIsMovieModalOpen(true);
   };
 
@@ -181,6 +188,7 @@ export default function InteractiveEditorPage() {
         banner_image: movieBanner.trim() || undefined,
         card_image: movieCard.trim() || undefined,
         trailer_video_url: movieTrailer.trim() || undefined,
+        languages: selectedLanguages.join(', '),
       };
 
       if (editingMovieObj) {
@@ -1006,6 +1014,45 @@ export default function InteractiveEditorPage() {
                     placeholder="e.g. https://domain.com/trailers/trailer.mp4"
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Languages</label>
+                  {availableLanguages.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {availableLanguages.map((lang) => {
+                        const isSelected = selectedLanguages.includes(lang.name);
+                        return (
+                          <button
+                            key={lang.id}
+                            type="button"
+                            onClick={() => {
+                              const updated = isSelected
+                                ? selectedLanguages.filter((l) => l !== lang.name)
+                                : [...selectedLanguages, lang.name];
+                              setSelectedLanguages(updated);
+                            }}
+                            className={cn(
+                              "px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95 cursor-pointer",
+                              isSelected
+                                ? "bg-primary/20 border-primary text-primary"
+                                : "bg-background border-border text-muted-foreground hover:text-white"
+                            )}
+                          >
+                            {lang.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <input 
+                      type="text"
+                      value={selectedLanguages.join(', ')}
+                      onChange={(e) => setSelectedLanguages(e.target.value.split(',').map(s => s.trim()))}
+                      placeholder="e.g. Tamil, Hindi, English"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    />
+                  )}
                 </div>
               </div>
 

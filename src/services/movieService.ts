@@ -73,22 +73,22 @@ export interface MoviePayload {
 export const movieService = {
   getAll: async () => {
     const response = await apiClient.get<{ status: boolean; data: Movie[] }>('/movies');
-    return response.data.data;
+    return response.data?.data || response.data || [];
   },
   
   getById: async (id: number) => {
     const response = await apiClient.get<{ status: boolean; data: Movie }>(`/movies/${id}`);
-    return response.data.data;
+    return response.data?.data || response.data;
   },
   
   create: async (data: Partial<MoviePayload>) => {
     const response = await apiClient.post<{ status: boolean; data: Movie }>('/movies', data);
-    return response.data.data;
+    return response.data?.data || response.data;
   },
   
   update: async (id: number, data: Partial<MoviePayload>) => {
     const response = await apiClient.put<{ status: boolean; data: Movie }>(`/movies/${id}`, data);
-    return response.data.data;
+    return response.data?.data || response.data;
   },
   
   delete: async (id: number) => {
@@ -97,11 +97,11 @@ export const movieService = {
 
   toggleFeatured: async (id: number, featured: boolean) => {
     const response = await apiClient.patch<{ status: boolean; data: Movie }>(`/movies/${id}/featured`, { featured });
-    return response.data.data;
+    return response.data?.data || response.data;
   },
 
   getTrending: async (limit: number = 10) => {
     const response = await apiClient.get<{ status: boolean; data: Movie[] }>(`/movies/trending?limit=${limit}`);
-    return response.data.data;
+    return response.data?.data || response.data || [];
   }
 };

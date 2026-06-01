@@ -43,15 +43,20 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [users, movies, subscriptions] = await Promise.all([
+      const [usersRaw, moviesRaw, subscriptionsRaw] = await Promise.all([
         userService.getAll().catch(() => []),
         movieService.getAll().catch(() => []),
         subscriptionService.getAll().catch(() => []),
       ]);
 
+      const users = Array.isArray(usersRaw) ? usersRaw : [];
+      const movies = Array.isArray(moviesRaw) ? moviesRaw : [];
+      const subscriptions = Array.isArray(subscriptionsRaw) ? subscriptionsRaw : [];
+
       let trending: Movie[] = [];
       try {
-        trending = await movieService.getTrending(5);
+        const trendResp = await movieService.getTrending(5);
+        trending = Array.isArray(trendResp) ? trendResp : [];
       } catch (err) {
         console.warn('Failed to fetch trending movies, using first 5 movies instead.');
         trending = movies.slice(0, 5);

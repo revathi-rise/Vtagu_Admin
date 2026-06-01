@@ -7,6 +7,7 @@ export interface InteractiveMovie {
   banner_image?: string | null;
   card_image?: string | null;
   trailer_video_url?: string | null;
+  languages?: string | null;
   created_at?: string;
 }
 

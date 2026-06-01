@@ -29,7 +29,7 @@ export default function MoviesPage() {
     try {
       setIsLoading(true);
       const data = await movieService.getAll();
-      setMovies(data);
+      setMovies(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch movies:', error);
       // Fallback to empty array if API fails

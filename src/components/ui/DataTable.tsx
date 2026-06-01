@@ -36,8 +36,10 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
+  const safeData = Array.isArray(data) ? data : [];
+
   const table = useReactTable({
-    data,
+    data: safeData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -118,8 +120,8 @@ export function DataTable<TData, TValue>({
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
           Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
-          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, data.length)}{' '}
-          of {data.length} entries
+          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, safeData.length)}{' '}
+          of {safeData.length} entries
         </div>
         <div className="flex items-center gap-2">
           <button
