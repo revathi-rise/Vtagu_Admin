@@ -19,7 +19,8 @@ import {
   Bell, 
   HelpCircle, 
   Settings,
-  User
+  User,
+  Coins
 } from 'lucide-react';
 
 const menuItems = [
@@ -30,8 +31,9 @@ const menuItems = [
   { icon: Users2, label: 'Actors', href: '/actors' },
   { icon: Tag, label: 'Genres', href: '/genres' },
   { icon: Globe, label: 'Languages', href: '/languages' },
+  { icon: Coins, label: 'Currencies', href: '/currencies' },
   { icon: GitBranch, label: 'Interactive', href: '/interactive' },
-  { icon: CreditCard, label: 'Subscriptions', href: '/subscriptions' },
+  { icon: CreditCard, label: 'Subscriptions', href: '/subscriptions?tab=plans' },
   { icon: Receipt, label: 'Transactions', href: '/transactions' },
   { icon: Smartphone, label: 'Devices', href: '/devices' },
   { icon: Bell, label: 'News Popup', href: '/news' },
@@ -56,7 +58,7 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {menuItems.map((item) => {
-          const active = pathname === item.href;
+          const active = pathname === item.href.split('?')[0];
           return (
             <Link
               key={item.href}

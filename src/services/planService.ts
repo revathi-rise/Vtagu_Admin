@@ -9,6 +9,7 @@ export interface Plan {
   name?: string; // fallback
   price?: number; // fallback
   status: 'active' | 'inactive' | number;
+  currency?: string;
   created_at?: string;
 }
 
