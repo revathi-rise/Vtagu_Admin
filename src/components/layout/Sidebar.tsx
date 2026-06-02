@@ -20,7 +20,8 @@ import {
   HelpCircle, 
   Settings,
   User,
-  Coins
+  Coins,
+  Image
 } from 'lucide-react';
 
 const menuItems = [
@@ -28,6 +29,7 @@ const menuItems = [
   { icon: Users, label: 'Users', href: '/users' },
   { icon: Film, label: 'Movies', href: '/movies' },
   { icon: Tv, label: 'Web Series', href: '/series' },
+  { icon: Image, label: 'Banners', href: '/posters' },
   { icon: Users2, label: 'Actors', href: '/actors' },
   { icon: Tag, label: 'Genres', href: '/genres' },
   { icon: Globe, label: 'Languages', href: '/languages' },
