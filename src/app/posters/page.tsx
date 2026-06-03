@@ -10,6 +10,7 @@ import { movieService, Movie } from '@/services/movieService';
 import { interactiveMovieService, InteractiveMovie } from '@/services/interactiveMovieService';
 import apiClient from '@/lib/api-client';
 import { cn } from '@/lib/utils';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import { 
   Loader2, 
   AlertCircle, 
@@ -76,6 +77,9 @@ export default function PostersPage() {
   const [deleteModalTitle, setDeleteModalTitle] = useState('');
   const [deleteModalMessage, setDeleteModalMessage] = useState('');
   const [onDeleteConfirm, setOnDeleteConfirm] = useState<(() => void) | null>(null);
+
+  // Image Cropping state
+  const [cropModalData, setCropModalData] = useState<{ file: File } | null>(null);
 
   useEffect(() => {
     fetchPosters();
@@ -175,12 +179,18 @@ export default function PostersPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = ''; // Reset file input
+    setCropModalData({ file });
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!cropModalData) return;
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', croppedBlob, 'cropped-poster.jpg');
 
     setIsUploading(true);
     try {
@@ -191,6 +201,7 @@ export default function PostersPage() {
       );
       if (res.data.status && res.data.url) {
         setPath(res.data.url);
+        setCropModalData(null);
       } else {
         alert(res.data.message || 'Image upload failed.');
       }
@@ -199,7 +210,6 @@ export default function PostersPage() {
       alert(err.response?.data?.message || 'Image upload failed.');
     } finally {
       setIsUploading(false);
-      e.target.value = ''; // Reset file input
     }
   };
 
@@ -1116,6 +1126,16 @@ export default function PostersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* IMAGE CROPPER MODAL */}
+      {cropModalData && (
+        <ImageCropperModal
+          imageFile={cropModalData.file}
+          aspectRatio={16 / 9}
+          onClose={() => setCropModalData(null)}
+          onCropComplete={handleCropComplete}
+        />
       )}
     </div>
   );
