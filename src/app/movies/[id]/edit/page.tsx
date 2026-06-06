@@ -122,8 +122,11 @@ const slugify = (text: string) => {
     .replace(/^-+|-+$/g, '');
 };
 
-export default function NewMoviePage() {
+export default function EditMoviePage({ params }: { params: Promise<{ id: string }> }) {
+  const unwrappedParams = React.use(params);
   const router = useRouter();
+  const [isLoadingMovie, setIsLoadingMovie] = React.useState(true);
+  const [movieId, setMovieId] = React.useState<number | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const { 
     register, 
@@ -154,9 +157,8 @@ export default function NewMoviePage() {
   const titleValue = watch('title');
 
   React.useEffect(() => {
-    if (titleValue) {
-      setValue('slug', slugify(titleValue), { shouldValidate: true });
-    }
+    // Only auto-generate slug if we haven't loaded the movie yet or user is explicitly typing
+    // Actually, for edit, we might just leave the slug alone unless they manually edit it.
   }, [titleValue, setValue]);
 
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
@@ -164,6 +166,16 @@ export default function NewMoviePage() {
   const [availableLanguages, setAvailableLanguages] = React.useState<Language[]>([]);
   const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>([]);
   const [availableGenres, setAvailableGenres] = React.useState<Genre[]>([]);
+
+  // Helper to fix malformed URLs from backend (e.g., duplicated https://...https://...)
+  const cleanUrl = (val: any): string => {
+    if (!val || typeof val !== 'string') return '';
+    const secondHttpIndex = val.indexOf('http', 1);
+    if (secondHttpIndex > 0) {
+      return val.substring(0, secondHttpIndex);
+    }
+    return val;
+  };
 
   React.useEffect(() => {
     const fetchLanguages = async () => {
@@ -185,6 +197,50 @@ export default function NewMoviePage() {
     fetchLanguages();
     fetchGenres();
   }, []);
+
+  React.useEffect(() => {
+    const fetchMovie = async () => {
+      try {
+        let data;
+        if (!isNaN(Number(unwrappedParams.id))) {
+          data = await movieService.getById(Number(unwrappedParams.id));
+        } else {
+          data = await movieService.getBySlug(unwrappedParams.id);
+        }
+        
+        if (data) {
+          setMovieId(data.id);
+          setValue('title', data.title || data.movie_name || '', { shouldValidate: true });
+          setValue('slug', data.slug || '', { shouldValidate: true });
+          setValue('description_short', data.description_short || data.shortDescription || data.movie_desc || '', { shouldValidate: true });
+          setValue('description_long', data.description_long || data.longDescription || '', { shouldValidate: true });
+          setValue('year', data.year || data.releaseYear || new Date().getFullYear(), { shouldValidate: true });
+          setValue('rating', data.rating || 0, { shouldValidate: true });
+          setValue('url', cleanUrl(data.media?.video?.url || (data as any).url || ''), { shouldValidate: true });
+          setValue('trailer_url', cleanUrl(data.media?.trailer?.url || (data as any).trailer_url || ''), { shouldValidate: true });
+          setValue('movie_image', cleanUrl(data.media?.image?.url || (data as any).movie_image || ''), { shouldValidate: true });
+          setValue('card_image', cleanUrl(data.media?.card_image?.url || (data as any).card_image || ''), { shouldValidate: true });
+          setValue('duration', data.duration || '', { shouldValidate: true });
+          setValue('featured', !!data.featured || !!data.isFeatured, { shouldValidate: true });
+          setValue('free', !!data.free || !!data.isFree, { shouldValidate: true });
+          setValue('is_interactive', !!data.is_interactive || !!data.isInteractive, { shouldValidate: true });
+          setValue('languages', data.languages || '', { shouldValidate: true });
+          if (data.languages) {
+             setSelectedLanguages(data.languages.split(',').map((s: string) => s.trim()));
+          }
+          setValue('director', data.director || data.director_name || '', { shouldValidate: true });
+          setValue('actors', data.actors || data.cast_name || '', { shouldValidate: true });
+          setValue('genre_id', data.genre_id || data.genreId || 4, { shouldValidate: true });
+          setValue('country_id', data.country_id || data.countryId || 1, { shouldValidate: true });
+        }
+      } catch (error) {
+        console.error('Failed to fetch movie details:', error);
+      } finally {
+        setIsLoadingMovie(false);
+      }
+    };
+    fetchMovie();
+  }, [unwrappedParams.id, setValue]);
 
   const [cropModalData, setCropModalData] = React.useState<{ file: File, field: 'movie_image' | 'card_image', aspectRatio: number } | null>(null);
 
@@ -259,7 +315,11 @@ export default function NewMoviePage() {
         }
       };
 
-      await movieService.create(payload);
+      if (movieId) {
+        await movieService.update(movieId, payload);
+      } else {
+        await movieService.create(payload);
+      }
       router.push('/movies');
     } catch (error) {
       console.error('Failed to create movie:', error);
@@ -288,8 +348,8 @@ export default function NewMoviePage() {
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Add New Movie</h1>
-            <p className="text-sm text-muted-foreground">Fill in the details to publish a new movie.</p>
+            <h1 className="text-2xl font-bold tracking-tight">Edit Movie</h1>
+            <p className="text-sm text-muted-foreground">Update the details of your movie.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -306,7 +366,7 @@ export default function NewMoviePage() {
             className="bg-brand-gradient text-white px-6 py-2 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100"
           >
             <Save className="w-4 h-4" />
-            {isSubmitting ? 'Publishing...' : 'Publish Movie'}
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>

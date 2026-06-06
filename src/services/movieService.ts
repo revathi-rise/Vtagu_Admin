@@ -48,25 +48,34 @@ export interface Movie {
 // Payload shape for creating / updating movies
 export interface MoviePayload {
   title: string;
-  slug: string;
-  description_short: string;
-  description_long: string;
-  year: number;
-  duration: string;
-  rating: number;
+  movie_name?: string;
+  slug?: string;
+  description_short?: string;
+  description_long?: string;
+  movie_desc?: string;
+  year?: number;
+  release_date?: string;
+  duration?: string;
+  rating?: number;
   genre_id?: number;
+  genre?: string;
   country_id?: number;
-  actors: string;
-  director: string;
   languages?: string;
-  featured: boolean;
-  free: boolean;
+  actors?: string;
+  cast_name?: string;
+  director?: string;
+  director_name?: string;
+  featured?: boolean;
+  free?: boolean;
+  age_restriction?: string;
+  kids_restriction?: boolean;
   is_interactive?: boolean;
-  movie_image: string;
-  card_image?: string;
-  url: string;
-  trailer_url?: string;
-  trailer_alt?: string;
+  media?: {
+    image?: { url: string; alt?: string };
+    card_image?: { url: string; alt?: string };
+    video?: { url: string; alt?: string };
+    trailer?: { url: string; alt?: string };
+  };
 }
 
 
@@ -78,6 +87,11 @@ export const movieService = {
   
   getById: async (id: number) => {
     const response = await apiClient.get<{ status: boolean; data: Movie }>(`/movies/${id}`);
+    return response.data?.data || response.data;
+  },
+
+  getBySlug: async (slug: string) => {
+    const response = await apiClient.get<{ status: boolean; data: Movie }>(`/movies/${slug}`);
     return response.data?.data || response.data;
   },
   

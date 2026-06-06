@@ -10,7 +10,10 @@ import {
   Trash2, 
   Eye, 
   Star,
-  Film
+  Film,
+  AlertTriangle,
+  X,
+  Loader2
 } from 'lucide-react';
 import { DataTable } from '@/components/ui/DataTable';
 import { movieService, Movie } from '@/services/movieService';
@@ -20,6 +23,8 @@ import Link from 'next/link';
 export default function MoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchMovies();
@@ -56,7 +61,7 @@ export default function MoviesPage() {
             </div>
           </div>
           <div>
-            <div className="font-semibold text-sm">{row.original.movie_name}</div>
+            <div className="font-semibold text-sm">{row.original.title || row.original.movie_name}</div>
             <div className="text-xs text-muted-foreground">{row.original.releaseYear || row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
           </div>
         </div>
@@ -103,11 +108,14 @@ export default function MoviesPage() {
       id: 'actions',
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-2">
-          <button className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-lg transition-colors">
+          <Link 
+            href={`/movies/${row.original.slug || row.original.id}/edit`}
+            className="p-2 hover:bg-muted text-muted-foreground hover:text-primary rounded-lg transition-colors"
+          >
             <Edit className="w-4 h-4" />
-          </button>
+          </Link>
           <button 
-            onClick={() => handleDelete(row.original.id)}
+            onClick={() => setMovieToDelete(row.original)}
             className="p-2 hover:bg-muted text-muted-foreground hover:text-destructive rounded-lg transition-colors"
           >
             <Trash2 className="w-4 h-4" />
@@ -117,15 +125,18 @@ export default function MoviesPage() {
     },
   ];
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this movie?')) return;
-    
+  const confirmDelete = async () => {
+    if (!movieToDelete) return;
+    setIsDeleting(true);
     try {
-      await movieService.delete(id);
-      setMovies(prev => prev.filter(m => m.id !== id));
+      await movieService.delete(movieToDelete.id);
+      setMovies(prev => prev.filter(m => m.id !== movieToDelete.id));
+      setMovieToDelete(null);
     } catch (error) {
       console.error('Failed to delete movie:', error);
       alert('Failed to delete movie. It might be linked to other records.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -159,6 +170,69 @@ export default function MoviesPage() {
           />
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {movieToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Delete Movie</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Are you sure you want to delete <span className="font-semibold text-foreground">{movieToDelete.title || movieToDelete.movie_name}</span>?
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => !isDeleting && setMovieToDelete(null)}
+                  className="p-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                  disabled={isDeleting}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-3 mt-5">
+                <p className="text-xs text-destructive/90">
+                  This action cannot be undone. This will permanently delete the movie and remove all associated data from our servers.
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border bg-muted/30 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setMovieToDelete(null)}
+                className="px-4 py-2 text-sm font-semibold hover:bg-muted rounded-xl transition-colors disabled:opacity-50"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-xl font-semibold flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Movie
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

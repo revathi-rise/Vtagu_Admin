@@ -14,6 +14,8 @@ export interface User {
   gender?: string;
   profile_picture?: string;
   plan?: string;
+  plan_price?: number;
+  type?: string;
 }
 
 export interface AuthResponse {
