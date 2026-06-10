@@ -44,6 +44,8 @@ export default function InteractiveEditorPage() {
   const [editingScene, setEditingScene] = useState<Scene | null>(null);
   const [sceneName, setSceneName] = useState('');
   const [sceneUrl, setSceneUrl] = useState('');
+  const [showChoicesOn, setShowChoicesOn] = useState('00:00:00');
+  const [isEnding, setIsEnding] = useState(false);
 
   // Scene Preview Modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -55,6 +57,10 @@ export default function InteractiveEditorPage() {
   const [currentChoiceSceneId, setCurrentChoiceSceneId] = useState<number | null>(null);
   const [choiceText, setChoiceText] = useState('');
   const [choiceTargetSceneId, setChoiceTargetSceneId] = useState<string>('');
+  const [choiceColor, setChoiceColor] = useState('#0000FF');
+  const [isQuickCreatingScene, setIsQuickCreatingScene] = useState(false);
+  const [quickSceneTitle, setQuickSceneTitle] = useState('');
+  const [quickSceneUrl, setQuickSceneUrl] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -359,6 +365,8 @@ export default function InteractiveEditorPage() {
     setEditingScene(null);
     setSceneName('');
     setSceneUrl('');
+    setShowChoicesOn('00:00:00');
+    setIsEnding(false);
     setIsSceneModalOpen(true);
   };
 
@@ -366,6 +374,8 @@ export default function InteractiveEditorPage() {
     setEditingScene(scene);
     setSceneName(scene.scene_text);
     setSceneUrl(scene.poster_url);
+    setShowChoicesOn(scene.show_choices_on || '00:00:00');
+    setIsEnding(Boolean(scene.is_ending));
     setIsSceneModalOpen(true);
   };
 
@@ -382,21 +392,23 @@ export default function InteractiveEditorPage() {
     try {
       if (editingScene) {
         // Update Scene
-        const updated = await sceneService.updateScene(editingScene.scene_id, {
+        await sceneService.updateScene(editingScene.scene_id, {
           scene_name: sceneName.trim(),
-          scene_url: sceneUrl.trim()
+          scene_url: sceneUrl.trim(),
+          show_choices_on: showChoicesOn.trim(),
+          is_ending: isEnding
         });
-        // Reload list
-        loadScenes(activeMovieId);
       } else {
         // Create Scene
         await sceneService.createScene({
           movie_id: activeMovieId,
           scene_name: sceneName.trim(),
-          scene_url: sceneUrl.trim()
+          scene_url: sceneUrl.trim(),
+          show_choices_on: showChoicesOn.trim(),
+          is_ending: isEnding
         });
-        loadScenes(activeMovieId);
       }
+      loadScenes(activeMovieId);
       setIsSceneModalOpen(false);
     } catch (err) {
       console.error('Failed to save scene:', err);
@@ -429,6 +441,10 @@ export default function InteractiveEditorPage() {
     setCurrentChoiceSceneId(sceneId);
     setChoiceText('');
     setChoiceTargetSceneId('');
+    setChoiceColor('#0000FF');
+    setIsQuickCreatingScene(false);
+    setQuickSceneTitle('');
+    setQuickSceneUrl('');
     setIsChoiceModalOpen(true);
   };
 
@@ -443,6 +459,10 @@ export default function InteractiveEditorPage() {
           ? choice.target_scene.toString()
           : ''
     );
+    setChoiceColor(choice.button_color || '#0000FF');
+    setIsQuickCreatingScene(false);
+    setQuickSceneTitle('');
+    setQuickSceneUrl('');
     setIsChoiceModalOpen(true);
   };
 
@@ -450,24 +470,48 @@ export default function InteractiveEditorPage() {
     e.preventDefault();
     if (!choiceText.trim() || !currentChoiceSceneId) return;
     const activeMovieId = useManualId ? Number(manualMovieId) : selectedMovieId;
+    if (!activeMovieId) {
+      alert('Please select or input a valid Movie ID first.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const targetSceneVal = choiceTargetSceneId ? Number(choiceTargetSceneId) : null;
+      let targetSceneVal = choiceTargetSceneId ? Number(choiceTargetSceneId) : null;
+
+      if (isQuickCreatingScene) {
+        if (!quickSceneTitle.trim() || !quickSceneUrl.trim()) {
+          alert('Please provide both a scene title and video URL for the new scene.');
+          setIsSubmitting(false);
+          return;
+        }
+        const newScene = await sceneService.createScene({
+          movie_id: activeMovieId,
+          scene_name: quickSceneTitle.trim(),
+          scene_url: quickSceneUrl.trim()
+        });
+        if (newScene && newScene.scene_id) {
+          targetSceneVal = newScene.scene_id;
+        } else {
+          throw new Error('Failed to retrieve ID of the quick-created scene.');
+        }
+      }
 
       if (editingChoice) {
         // Update Choice
         await sceneService.updateChoice({
           choice_id: editingChoice.choice_id,
           button_text: choiceText.trim(),
-          target_scene: targetSceneVal
+          target_scene: targetSceneVal,
+          button_color: choiceColor.trim()
         });
       } else {
         // Create Choice
         await sceneService.createChoice({
           scene_id: currentChoiceSceneId,
           button_text: choiceText.trim(),
-          target_scene: targetSceneVal
+          target_scene: targetSceneVal,
+          button_color: choiceColor.trim()
         });
       }
       
@@ -475,7 +519,7 @@ export default function InteractiveEditorPage() {
       setIsChoiceModalOpen(false);
     } catch (err) {
       console.error('Failed to save choice:', err);
-      alert('Error saving choice. Ensure target scene ID is valid.');
+      alert('Error saving choice. Ensure inputs are valid.');
     } finally {
       setIsSubmitting(false);
     }
@@ -704,13 +748,20 @@ export default function InteractiveEditorPage() {
                             )}
                           </div>
                           
-                          <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" />
-                              Interactive trigger
-                            </span>
-                            <span>{scene.choices.length} Branches</span>
-                          </div>
+                           <div className="mt-4 pt-4 border-t border-border/30 flex flex-col gap-2 text-xs text-muted-foreground">
+                             <div className="flex items-center justify-between">
+                               <span className="flex items-center gap-1">
+                                 <Clock className="w-3.5 h-3.5 text-primary" />
+                                 Trigger at: <strong className="text-white font-mono">{scene.show_choices_on || '00:00:00'}</strong>
+                               </span>
+                               <span>{scene.choices.length} Branches</span>
+                             </div>
+                             {scene.is_ending && (
+                               <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold rounded-lg uppercase tracking-wide text-center">
+                                 Flow Ending Scene
+                               </div>
+                             )}
+                           </div>
                         </div>
 
                         {/* Right columns - Branches/Choices CRUD */}
@@ -724,9 +775,19 @@ export default function InteractiveEditorPage() {
                               <div 
                                 key={choice.choice_id} 
                                 className="p-4 bg-muted/30 hover:bg-muted/50 rounded-xl border border-border/50 space-y-3 relative group/choice transition-all shadow-sm"
+                                style={choice.button_color ? { borderLeft: `3px solid ${choice.button_color}` } : undefined}
                               >
                                 <div className="flex justify-between items-start">
-                                  <span className="text-[10px] font-bold text-primary tracking-wider uppercase">Path choice</span>
+                                  <span className="text-[10px] font-bold text-primary tracking-wider uppercase flex items-center gap-1.5">
+                                    Path choice
+                                    {choice.button_color && (
+                                      <span 
+                                        className="w-2 h-2 rounded-full border border-white/20 shadow-inner" 
+                                        style={{ backgroundColor: choice.button_color }}
+                                        title={`Color: ${choice.button_color}`}
+                                      />
+                                    )}
+                                  </span>
                                   <div className="flex items-center gap-1 opacity-0 group-hover/choice:opacity-100 transition-opacity">
                                     <button 
                                       onClick={() => handleOpenEditChoice(choice, scene.scene_id)}
@@ -746,7 +807,14 @@ export default function InteractiveEditorPage() {
                                 </div>
 
                                 <div className="space-y-1">
-                                  <label className="text-[10px] text-muted-foreground">Button Text</label>
+                                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                                    <label>Button Text</label>
+                                    {choice.button_color && (
+                                      <span className="font-mono text-[9px] uppercase tracking-wider text-zinc-500">
+                                        {choice.button_color}
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="font-semibold text-sm">{choice.choice_text || choice.button_text}</div>
                                 </div>
 
@@ -850,6 +918,34 @@ export default function InteractiveEditorPage() {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Show Choices On</label>
+                  <input 
+                    type="text"
+                    value={showChoicesOn}
+                    onChange={(e) => setShowChoicesOn(e.target.value)}
+                    placeholder="e.g. 00:01:00"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end pb-3">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={isEnding}
+                      onChange={(e) => setIsEnding(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <span className="font-semibold text-sm text-white/90">
+                      Is ending scene?
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
                 <button
                   type="button"
@@ -912,22 +1008,90 @@ export default function InteractiveEditorPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Destination target scene</label>
-                <select
-                  value={choiceTargetSceneId}
-                  onChange={(e) => setChoiceTargetSceneId(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white cursor-pointer"
-                >
-                  <option value="">-- Select Destination (End Flow) --</option>
-                  {scenes
-                    .filter(s => s.scene_id !== currentChoiceSceneId)
-                    .map(s => (
-                      <option key={s.scene_id} value={s.scene_id}>
-                        Scene #{s.scene_id}: {s.scene_text}
-                      </option>
-                    ))
-                  }
-                </select>
+                <label className="text-sm font-medium">Button color theme</label>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <input 
+                      type="text"
+                      value={choiceColor}
+                      onChange={(e) => setChoiceColor(e.target.value)}
+                      placeholder="#0000FF"
+                      className="w-full bg-background border border-border rounded-xl pl-4 pr-12 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                      required
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground uppercase">HEX</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl border border-border overflow-hidden relative flex-shrink-0 cursor-pointer shadow-inner">
+                    <input 
+                      type="color"
+                      value={choiceColor}
+                      onChange={(e) => setChoiceColor(e.target.value)}
+                      className="absolute inset-[-4px] w-[calc(100%+8px)] h-[calc(100%+8px)] cursor-pointer border-0 p-0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {!isQuickCreatingScene && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Destination target scene</label>
+                  <select
+                    value={choiceTargetSceneId}
+                    onChange={(e) => setChoiceTargetSceneId(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white cursor-pointer"
+                  >
+                    <option value="">-- Select Destination (End Flow) --</option>
+                    {scenes
+                      .filter(s => s.scene_id !== currentChoiceSceneId)
+                      .map(s => (
+                        <option key={s.scene_id} value={s.scene_id}>
+                          Scene #{s.scene_id}: {s.scene_text}
+                        </option>
+                      ))
+                    }
+                  </select>
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={isQuickCreatingScene}
+                    onChange={(e) => setIsQuickCreatingScene(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                  />
+                  <span className="font-medium text-xs text-muted-foreground hover:text-white transition-colors">
+                    Create new scene as destination
+                  </span>
+                </label>
+
+                {isQuickCreatingScene && (
+                  <div className="p-4 bg-muted/20 border border-border/60 rounded-2xl space-y-4 animate-in slide-in-from-top-2 duration-150">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground">New Scene Title</label>
+                      <input 
+                        type="text"
+                        value={quickSceneTitle}
+                        onChange={(e) => setQuickSceneTitle(e.target.value)}
+                        placeholder="e.g. Branch 2 - Approach the door"
+                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 text-white"
+                        required={isQuickCreatingScene}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground">Video URL / Poster Path</label>
+                      <input 
+                        type="text"
+                        value={quickSceneUrl}
+                        onChange={(e) => setQuickSceneUrl(e.target.value)}
+                        placeholder="e.g. https://domain.com/videos/scene_02.mp4"
+                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
+                        required={isQuickCreatingScene}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
