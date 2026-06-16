@@ -12,12 +12,17 @@ export interface Movie {
   slug: string;
   shortDescription?: string;
   movie_desc?: string;
+  description_short?: string;
   longDescription?: string;
+  description_long?: string;
   releaseYear?: number;
+  year?: number;
   release_date?: string;
   countryId?: number;
+  country_id?: number;
   rating?: number;
   genreId?: number;
+  genre_id?: number;
   genre_name?: string;
   ageGroup?: string | null;
   actors?: string;
@@ -25,7 +30,9 @@ export interface Movie {
   director?: string;
   director_name?: string;
   isFeatured?: boolean;
+  featured?: boolean;
   isFree?: boolean;
+  free?: boolean;
   movieType?: string | null;
   contentType?: string | null;
   ageRestriction?: string | null;
@@ -34,6 +41,7 @@ export interface Movie {
   languages?: string;
   viewCount?: number;
   isInteractive?: boolean;
+  is_interactive?: boolean;
   interactiveMap?: unknown;
   media?: {
     image?: MovieMedia;

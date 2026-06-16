@@ -14,7 +14,7 @@ import {
   Cell
 } from 'recharts';
 
-const revenueData = [
+const defaultRevenueData = [
   { name: 'Jan', revenue: 4000, users: 2400 },
   { name: 'Feb', revenue: 3000, users: 1398 },
   { name: 'Mar', revenue: 2000, users: 9800 },
@@ -24,7 +24,7 @@ const revenueData = [
   { name: 'Jul', revenue: 3490, users: 4300 },
 ];
 
-const topGenres = [
+const defaultTopGenres = [
   { name: 'Action', count: 45 },
   { name: 'Drama', count: 32 },
   { name: 'Comedy', count: 28 },
@@ -34,7 +34,15 @@ const topGenres = [
 
 const COLORS = ['#3299ff', '#9248ff', '#f43f5e', '#10b981', '#f59e0b'];
 
-export default function DashboardCharts() {
+interface DashboardChartsProps {
+  revenueData?: Array<{ name: string; revenue: number; users: number }>;
+  topGenres?: Array<{ name: string; count: number }>;
+}
+
+export default function DashboardCharts({
+  revenueData = defaultRevenueData,
+  topGenres = defaultTopGenres,
+}: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
       <div className="xl:col-span-2 bg-card p-6 rounded-2xl border border-border">

@@ -14,9 +14,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { userService } from '@/services/userService';
-import { movieService, Movie } from '@/services/movieService';
-import { subscriptionService } from '@/services/subscriptionService';
+import { dashboardService } from '@/services/dashboardService';
+import { Movie } from '@/services/movieService';
 
 // Dynamically import charts to keep initial bundle small
 const DashboardCharts = dynamic(() => import('@/components/dashboard/DashboardCharts'), { 
@@ -34,6 +33,9 @@ export default function DashboardPage() {
     { label: 'Total Views', value: '0', icon: Eye, trend: '0%', isUp: true },
   ]);
   const [trendingMovies, setTrendingMovies] = useState<Movie[]>([]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [topGenres, setTopGenres] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,40 +45,21 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [usersRaw, moviesRaw, subscriptionsRaw] = await Promise.all([
-        userService.getAll().catch(() => []),
-        movieService.getAll().catch(() => []),
-        subscriptionService.getAll().catch(() => []),
-      ]);
-
-      const users = Array.isArray(usersRaw) ? usersRaw : [];
-      const movies = Array.isArray(moviesRaw) ? moviesRaw : [];
-      const subscriptions = Array.isArray(subscriptionsRaw) ? subscriptionsRaw : [];
-
-      let trending: Movie[] = [];
-      try {
-        const trendResp = await movieService.getTrending(5);
-        trending = Array.isArray(trendResp) ? trendResp : [];
-      } catch (err) {
-        console.warn('Failed to fetch trending movies, using first 5 movies instead.');
-        trending = movies.slice(0, 5);
-      }
-
-      const activeSubs = subscriptions.filter(s => s.status === 'active').length;
-      const totalRevenue = subscriptions.reduce((acc, curr) => acc + (curr.paid_amount || 0), 0);
-      const totalViews = movies.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
-      const totalSeries = movies.filter(m => String(m.movieType || '').toLowerCase() === 'series').length;
+      const data = await dashboardService.getStats();
 
       setStats([
-        { label: 'Total Users', value: (users?.length || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
-        { label: 'Total Movies', value: movies.filter(m => String(m.movieType || '').toLowerCase() !== 'series').length.toLocaleString(), icon: Film, trend: '+0%', isUp: true },
-        { label: 'Total Series', value: totalSeries.toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
-        { label: 'Active Subs', value: activeSubs.toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
-        { label: 'Revenue', value: formatCurrency(totalRevenue), icon: TrendingUp, trend: '+0%', isUp: true },
-        { label: 'Total Views', value: totalViews.toLocaleString(), icon: Eye, trend: '+0%', isUp: true },
+        { label: 'Total Users', value: (data.totalUsers || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
+        { label: 'Total Movies', value: (data.totalMovies || 0).toLocaleString(), icon: Film, trend: '+0%', isUp: true },
+        { label: 'Total Series', value: (data.totalSeries || 0).toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
+        { label: 'Active Subs', value: (data.activeSubs || 0).toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
+        { label: 'Revenue', value: formatCurrency(data.revenue || 0), icon: TrendingUp, trend: '+0%', isUp: true },
+        { label: 'Total Views', value: (data.totalViews || 0).toLocaleString(), icon: Eye, trend: '+0%', isUp: true },
       ]);
 
-      setTrendingMovies(trending);
+      setTrendingMovies(data.trendingMovies || []);
+      setRevenueData(data.revenueData || []);
+      setTopGenres(data.topGenres || []);
+      setRecentActivities(data.recentActivities || []);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -120,7 +103,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <DashboardCharts />
+      <DashboardCharts revenueData={revenueData} topGenres={topGenres} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-card p-6 rounded-2xl border border-border">
@@ -158,8 +141,27 @@ export default function DashboardPage() {
 
         <div className="bg-card p-6 rounded-2xl border border-border">
           <h3 className="text-lg font-semibold mb-6">Recent Activities</h3>
-          <div className="space-y-4 text-center py-8">
-            <p className="text-muted-foreground italic text-sm">Real-time activity log integration pending backend update.</p>
+          <div className="space-y-4">
+            {isLoading ? (
+              [1, 2, 3].map(i => <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />)
+            ) : recentActivities.length > 0 ? (
+              recentActivities.map((act) => (
+                <div key={act.id} className="flex items-center justify-between p-3 hover:bg-muted/50 rounded-xl transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "p-2 rounded-lg text-xs font-semibold",
+                      act.type === 'signup' ? "bg-blue-500/10 text-blue-400" : "bg-emerald-500/10 text-emerald-400"
+                    )}>
+                      {act.type === 'signup' ? 'User' : 'Txn'}
+                    </div>
+                    <p className="text-sm font-medium text-left">{act.message}</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{act.time}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No recent activities.</p>
+            )}
           </div>
         </div>
       </div>
