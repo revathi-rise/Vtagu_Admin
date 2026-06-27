@@ -374,7 +374,7 @@ export default function InteractiveEditorPage() {
     setEditingScene(scene);
     setSceneName(scene.scene_text);
     setSceneUrl(scene.poster_url);
-    setShowChoicesOn(scene.show_choices_on || '00:00:00');
+    setShowChoicesOn(scene.show_choices_on || (scene as any).show_on || '00:00:00');
     setIsEnding(Boolean(scene.is_ending));
     setIsSceneModalOpen(true);
   };
@@ -752,7 +752,7 @@ export default function InteractiveEditorPage() {
                              <div className="flex items-center justify-between">
                                <span className="flex items-center gap-1">
                                  <Clock className="w-3.5 h-3.5 text-primary" />
-                                 Trigger at: <strong className="text-white font-mono">{scene.show_choices_on || '00:00:00'}</strong>
+                                 Trigger at: <strong className="text-white font-mono">{scene.show_choices_on || (scene as any).show_on || '00:00:00'}</strong>
                                </span>
                                <span>{scene.choices.length} Branches</span>
                              </div>
@@ -1293,12 +1293,31 @@ export default function InteractiveEditorPage() {
             </div>
 
             <div className="mt-5 flex flex-col items-center justify-center bg-black/40 rounded-2xl p-2 overflow-hidden aspect-video border border-border/30">
-              <video 
-                src={previewScene.poster_url} 
-                controls 
-                autoPlay
-                className="w-full h-full rounded-xl object-contain shadow-lg"
-              />
+              {(() => {
+                const url = previewScene.poster_url;
+                const ytMatch = url?.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+                const isYouTube = ytMatch && ytMatch[2].length === 11;
+                
+                if (isYouTube) {
+                  return (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${ytMatch[2]}?autoplay=1`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="w-full h-full rounded-xl shadow-lg border-0"
+                    />
+                  );
+                }
+                
+                return (
+                  <video 
+                    src={url} 
+                    controls 
+                    autoPlay
+                    className="w-full h-full rounded-xl object-contain shadow-lg"
+                  />
+                );
+              })()}
             </div>
             
             <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground">
