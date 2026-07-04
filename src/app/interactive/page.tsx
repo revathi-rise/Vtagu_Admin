@@ -46,6 +46,7 @@ export default function InteractiveEditorPage() {
   const [sceneUrl, setSceneUrl] = useState('');
   const [showChoicesOn, setShowChoicesOn] = useState('00:00:00');
   const [isEnding, setIsEnding] = useState(false);
+  const [endText, setEndText] = useState('');
 
   // Scene Preview Modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -367,6 +368,7 @@ export default function InteractiveEditorPage() {
     setSceneUrl('');
     setShowChoicesOn('00:00:00');
     setIsEnding(false);
+    setEndText('');
     setIsSceneModalOpen(true);
   };
 
@@ -376,6 +378,7 @@ export default function InteractiveEditorPage() {
     setSceneUrl(scene.poster_url);
     setShowChoicesOn(scene.show_choices_on || (scene as any).show_on || '00:00:00');
     setIsEnding(Boolean(scene.is_ending));
+    setEndText(scene.end_text || '');
     setIsSceneModalOpen(true);
   };
 
@@ -396,7 +399,8 @@ export default function InteractiveEditorPage() {
           scene_name: sceneName.trim(),
           scene_url: sceneUrl.trim(),
           show_choices_on: showChoicesOn.trim(),
-          is_ending: isEnding
+          is_ending: isEnding,
+          end_text: isEnding ? endText.trim() : ''
         });
       } else {
         // Create Scene
@@ -405,7 +409,8 @@ export default function InteractiveEditorPage() {
           scene_name: sceneName.trim(),
           scene_url: sceneUrl.trim(),
           show_choices_on: showChoicesOn.trim(),
-          is_ending: isEnding
+          is_ending: isEnding,
+          end_text: isEnding ? endText.trim() : ''
         });
       }
       loadScenes(activeMovieId);
@@ -945,6 +950,19 @@ export default function InteractiveEditorPage() {
                   </label>
                 </div>
               </div>
+
+              {isEnding && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/90">Ending Message / Text</label>
+                  <input 
+                    type="text"
+                    value={endText}
+                    onChange={(e) => setEndText(e.target.value)}
+                    placeholder="e.g. The End, Game Over, You Survived!"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  />
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
                 <button
