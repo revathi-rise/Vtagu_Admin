@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { sceneService, Scene, Choice } from '@/services/sceneService';
 import { interactiveMovieService, InteractiveMovie } from '@/services/interactiveMovieService';
 import { languageService, Language } from '@/services/languageService';
+import { currencyService, Currency } from '@/services/currencyService';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import apiClient from '@/lib/api-client';
 
@@ -75,6 +76,10 @@ export default function InteractiveEditorPage() {
   const [movieTrailer, setMovieTrailer] = useState('');
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [movieIsFree, setMovieIsFree] = useState<boolean>(true);
+  const [moviePrice, setMoviePrice] = useState<string>('0.00');
+  const [movieCurrency, setMovieCurrency] = useState<string>('INR');
+  const [availableCurrencies, setAvailableCurrencies] = useState<Currency[]>([]);
 
   // Image Upload / Cropping state for Movie Modal
   const [isMovieUploading, setIsMovieUploading] = useState(false);
@@ -100,8 +105,9 @@ export default function InteractiveEditorPage() {
 
   useEffect(() => {
     fetchMovies();
-    // Fetch languages
+    // Fetch languages & currencies
     languageService.getAll().then(setAvailableLanguages).catch(console.error);
+    currencyService.getAll().then(setAvailableCurrencies).catch(console.error);
   }, []);
 
   const fetchMovies = async () => {
@@ -167,6 +173,9 @@ export default function InteractiveEditorPage() {
     setMovieCard('');
     setMovieTrailer('');
     setSelectedLanguages([]);
+    setMovieIsFree(true);
+    setMoviePrice('0.00');
+    setMovieCurrency('INR');
     setIsMovieModalOpen(true);
   };
 
@@ -180,6 +189,9 @@ export default function InteractiveEditorPage() {
     setMovieCard(movie.card_image || '');
     setMovieTrailer(movie.trailer_video_url || '');
     setSelectedLanguages(movie.languages ? movie.languages.split(',').map(l => l.trim()).filter(Boolean) : []);
+    setMovieIsFree(movie.is_free !== 0);
+    setMoviePrice(movie.price !== undefined ? movie.price.toString() : '0.00');
+    setMovieCurrency(movie.currency || 'INR');
     setIsMovieModalOpen(true);
   };
 
@@ -196,6 +208,9 @@ export default function InteractiveEditorPage() {
         card_image: movieCard.trim() || undefined,
         trailer_video_url: movieTrailer.trim() || undefined,
         languages: selectedLanguages.join(', '),
+        is_free: movieIsFree ? 1 : 0,
+        price: movieIsFree ? 0 : Number(moviePrice) || 0,
+        currency: movieCurrency,
       };
 
       if (editingMovieObj) {
@@ -677,8 +692,23 @@ export default function InteractiveEditorPage() {
             <div className="flex items-center justify-between bg-muted/20 px-5 py-4 border border-border/40 rounded-2xl">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Editing timeline of Movie ID: <strong className="text-white">{activeMovieId}</strong>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2 flex-wrap">
+                  Editing: <strong className="text-white">{movies.find(m => m.interactive_movie_id === activeMovieId)?.title || `Movie #${activeMovieId}`}</strong>
+                  {(() => {
+                    const activeMovie = movies.find(m => m.interactive_movie_id === activeMovieId);
+                    if (!activeMovie) return null;
+                    const isFree = activeMovie.is_free !== 0;
+                    return (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border",
+                        isFree 
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      )}>
+                        {isFree ? "Free" : `Paid (${activeMovie.currency || 'INR'} ${activeMovie.price || 0})`}
+                      </span>
+                    );
+                  })()}
                 </span>
               </div>
               <button 
@@ -1234,6 +1264,75 @@ export default function InteractiveEditorPage() {
                       placeholder="e.g. Tamil, Hindi, English"
                       className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
                     />
+                  )}
+                </div>
+
+                {/* Interactive Payment Configuration */}
+                <div className="border-t border-border/40 pt-4 space-y-4">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Payment Configuration</span>
+                  
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input 
+                        type="radio"
+                        name="movie_is_free"
+                        checked={movieIsFree}
+                        onChange={() => setMovieIsFree(true)}
+                        className="rounded-full border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                      />
+                      <span className="font-semibold text-xs text-white">Free to Watch</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <input 
+                        type="radio"
+                        name="movie_is_free"
+                        checked={!movieIsFree}
+                        onChange={() => setMovieIsFree(false)}
+                        className="rounded-full border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                      />
+                      <span className="font-semibold text-xs text-white">Paid / Premium</span>
+                    </label>
+                  </div>
+
+                  {!movieIsFree && (
+                    <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-muted-foreground">Price</label>
+                        <input 
+                          type="number"
+                          step="0.01"
+                          value={moviePrice}
+                          onChange={(e) => setMoviePrice(e.target.value)}
+                          placeholder="e.g. 99.00"
+                          className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
+                          required={!movieIsFree}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-muted-foreground">Currency</label>
+                        <select 
+                          value={movieCurrency}
+                          onChange={(e) => setMovieCurrency(e.target.value)}
+                          className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 text-white cursor-pointer h-[34px]"
+                          required={!movieIsFree}
+                        >
+                          {availableCurrencies.length > 0 ? (
+                            availableCurrencies.map((curr) => (
+                              <option key={curr.id} value={curr.code} className="bg-card text-white">
+                                {curr.code} ({curr.symbol || curr.name})
+                              </option>
+                            ))
+                          ) : (
+                            <>
+                              <option value="INR" className="bg-card text-white">INR (₹)</option>
+                              <option value="USD" className="bg-card text-white">USD ($)</option>
+                              <option value="EUR" className="bg-card text-white">EUR (€)</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

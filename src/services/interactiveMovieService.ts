@@ -9,6 +9,9 @@ export interface InteractiveMovie {
   trailer_video_url?: string | null;
   languages?: string | null;
   created_at?: string;
+  is_free?: number;
+  price?: number;
+  currency?: string;
 }
 
 export const interactiveMovieService = {

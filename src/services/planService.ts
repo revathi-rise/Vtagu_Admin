@@ -11,6 +11,7 @@ export interface Plan {
   status: 'active' | 'inactive' | number;
   currency?: string;
   created_at?: string;
+  is_interactive_included?: number;
 }
 
 export const planService = {

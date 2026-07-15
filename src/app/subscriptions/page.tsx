@@ -55,6 +55,7 @@ function SubscriptionsContent() {
   const [planCurrencyInput, setPlanCurrencyInput] = useState('USD');
   const [planCurrSearchQuery, setPlanCurrSearchQuery] = useState('');
   const [isPlanCurrDropdownOpen, setIsPlanCurrDropdownOpen] = useState(false);
+  const [planIsInteractiveIncluded, setPlanIsInteractiveIncluded] = useState(false);
 
   // Form states - Edit Plan
   const [editPlanName, setEditPlanName] = useState('');
@@ -64,6 +65,7 @@ function SubscriptionsContent() {
   const [editPlanCurrencyInput, setEditPlanCurrencyInput] = useState('USD');
   const [editPlanCurrSearchQuery, setEditPlanCurrSearchQuery] = useState('');
   const [isEditPlanCurrDropdownOpen, setIsEditPlanCurrDropdownOpen] = useState(false);
+  const [editPlanIsInteractiveIncluded, setEditPlanIsInteractiveIncluded] = useState(false);
 
   // --- USER SUBSCRIPTIONS STATE ---
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -173,6 +175,7 @@ function SubscriptionsContent() {
     setPlanDescription('');
     setPlanCurrencyInput('USD');
     setPlanCurrSearchQuery('USD');
+    setPlanIsInteractiveIncluded(false);
     setIsPlanAddModalOpen(true);
   };
 
@@ -189,6 +192,7 @@ function SubscriptionsContent() {
         plan_description: planDescription.trim(),
         currency: planCurrencyInput || 'USD',
         status: 1, // Active by default
+        is_interactive_included: planIsInteractiveIncluded ? 1 : 0,
       };
 
       const created = await planService.create(payload);
@@ -210,6 +214,7 @@ function SubscriptionsContent() {
     setEditPlanDescription(plan.plan_description || '');
     setEditPlanCurrencyInput(plan.currency || 'USD');
     setEditPlanCurrSearchQuery(plan.currency || 'USD');
+    setEditPlanIsInteractiveIncluded(plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1);
     setIsPlanEditModalOpen(true);
   };
 
@@ -225,6 +230,7 @@ function SubscriptionsContent() {
         plan_duration: editPlanDuration,
         plan_description: editPlanDescription.trim(),
         currency: editPlanCurrencyInput || 'USD',
+        is_interactive_included: editPlanIsInteractiveIncluded ? 1 : 0,
       };
 
       const updated = await planService.update(editingPlan.id, payload);
@@ -639,6 +645,14 @@ function SubscriptionsContent() {
                               <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                               <span>Standard Quality Streams</span>
                             </div>
+                            <div className="flex items-center gap-3 text-sm text-white/80">
+                              {plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1 ? (
+                                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                              ) : (
+                                <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                              )}
+                              <span>Includes Premium Interactive Movies</span>
+                            </div>
                           </div>
                         </div>
       
@@ -825,6 +839,20 @@ function SubscriptionsContent() {
                 </div>
               </div>
 
+              <div className="space-y-1.5 pt-1">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={planIsInteractiveIncluded}
+                    onChange={(e) => setPlanIsInteractiveIncluded(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                  />
+                  <span className="font-semibold text-xs text-white">
+                    Includes access to premium interactive movies
+                  </span>
+                </label>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Description</label>
                 <textarea 
@@ -974,6 +1002,20 @@ function SubscriptionsContent() {
                     <option value="1 Year" className="bg-card">1 Year</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={editPlanIsInteractiveIncluded}
+                    onChange={(e) => setEditPlanIsInteractiveIncluded(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                  />
+                  <span className="font-semibold text-xs text-white">
+                    Includes access to premium interactive movies
+                  </span>
+                </label>
               </div>
 
               <div className="space-y-1.5">
