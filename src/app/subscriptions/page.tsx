@@ -52,20 +52,32 @@ function SubscriptionsContent() {
   const [planPrice, setPlanPrice] = useState('');
   const [planDuration, setPlanDuration] = useState('1 Month');
   const [planDescription, setPlanDescription] = useState('');
-  const [planCurrencyInput, setPlanCurrencyInput] = useState('USD');
-  const [planCurrSearchQuery, setPlanCurrSearchQuery] = useState('');
+  const [planCurrencyInput, setPlanCurrencyInput] = useState('INR');
+  const [planCurrSearchQuery, setPlanCurrSearchQuery] = useState('INR');
   const [isPlanCurrDropdownOpen, setIsPlanCurrDropdownOpen] = useState(false);
   const [planIsInteractiveIncluded, setPlanIsInteractiveIncluded] = useState(false);
+  const [planScreens, setPlanScreens] = useState('');
+  const [planQuality, setPlanQuality] = useState('');
+  const [planCompatibility, setPlanCompatibility] = useState('3'); // default to All Devices
+  const [planUnlimited, setPlanUnlimited] = useState(true);
+  const [planCancellation, setPlanCancellation] = useState(true);
+  const [planType, setPlanType] = useState<'standard' | 'interactive' | 'both'>('both');
 
   // Form states - Edit Plan
   const [editPlanName, setEditPlanName] = useState('');
   const [editPlanPrice, setEditPlanPrice] = useState('');
   const [editPlanDuration, setEditPlanDuration] = useState('');
   const [editPlanDescription, setEditPlanDescription] = useState('');
-  const [editPlanCurrencyInput, setEditPlanCurrencyInput] = useState('USD');
+  const [editPlanCurrencyInput, setEditPlanCurrencyInput] = useState('INR');
   const [editPlanCurrSearchQuery, setEditPlanCurrSearchQuery] = useState('');
   const [isEditPlanCurrDropdownOpen, setIsEditPlanCurrDropdownOpen] = useState(false);
   const [editPlanIsInteractiveIncluded, setEditPlanIsInteractiveIncluded] = useState(false);
+  const [editPlanScreens, setEditPlanScreens] = useState('');
+  const [editPlanQuality, setEditPlanQuality] = useState('');
+  const [editPlanCompatibility, setEditPlanCompatibility] = useState('3');
+  const [editPlanUnlimited, setEditPlanUnlimited] = useState(true);
+  const [editPlanCancellation, setEditPlanCancellation] = useState(true);
+  const [editPlanType, setEditPlanType] = useState<'standard' | 'interactive' | 'both'>('both');
 
   // --- USER SUBSCRIPTIONS STATE ---
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -94,6 +106,10 @@ function SubscriptionsContent() {
   const [subTxnIdInput, setSubTxnIdInput] = useState('');
   const [subCurrencyInput, setSubCurrencyInput] = useState('INR');
   const [subPaidAmountInput, setSubPaidAmountInput] = useState('');
+  const [subPaymentMethodInput, setSubPaymentMethodInput] = useState('Manual');
+  const [subPaymentDetailsInput, setSubPaymentDetailsInput] = useState('');
+  const [subDateFromInput, setSubDateFromInput] = useState('');
+  const [subDateToInput, setSubDateToInput] = useState('');
 
   // Currencies database lists and modal dropdown search states
   const [currencies, setCurrencies] = useState<Currency[]>([]);
@@ -173,9 +189,15 @@ function SubscriptionsContent() {
     setPlanPrice('');
     setPlanDuration('1 Month');
     setPlanDescription('');
-    setPlanCurrencyInput('USD');
-    setPlanCurrSearchQuery('USD');
+    setPlanCurrencyInput('INR');
+    setPlanCurrSearchQuery('INR');
     setPlanIsInteractiveIncluded(false);
+    setPlanScreens('');
+    setPlanQuality('');
+    setPlanCompatibility('3');
+    setPlanUnlimited(true);
+    setPlanCancellation(true);
+    setPlanType('both');
     setIsPlanAddModalOpen(true);
   };
 
@@ -190,9 +212,14 @@ function SubscriptionsContent() {
         plan_price: Number(planPrice),
         plan_duration: planDuration,
         plan_description: planDescription.trim(),
-        currency: planCurrencyInput || 'USD',
+        currency: planCurrencyInput || 'INR',
         status: 1, // Active by default
         is_interactive_included: planIsInteractiveIncluded ? 1 : 0,
+        screens: planScreens.trim() !== '' ? Number(planScreens) : null,
+        quality: planQuality.trim() !== '' ? planQuality.trim() : null,
+        compatibility: Number(planCompatibility),
+        unlimited: planUnlimited ? 1 : 0,
+        cancellation: planCancellation ? 1 : 0,
       };
 
       const created = await planService.create(payload);
@@ -212,9 +239,26 @@ function SubscriptionsContent() {
     setEditPlanPrice(plan.plan_price.toString());
     setEditPlanDuration(plan.plan_duration);
     setEditPlanDescription(plan.plan_description || '');
-    setEditPlanCurrencyInput(plan.currency || 'USD');
-    setEditPlanCurrSearchQuery(plan.currency || 'USD');
-    setEditPlanIsInteractiveIncluded(plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1);
+    setEditPlanCurrencyInput(plan.currency || 'INR');
+    setEditPlanCurrSearchQuery(plan.currency || 'INR');
+    
+    const isInteractive = plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1;
+    const hasQuality = plan.quality && plan.quality !== '' && plan.quality.toLowerCase() !== 'none';
+    
+    let type: 'standard' | 'interactive' | 'both' = 'both';
+    if (isInteractive && !hasQuality) {
+      type = 'interactive';
+    } else if (!isInteractive) {
+      type = 'standard';
+    }
+    
+    setEditPlanType(type);
+    setEditPlanIsInteractiveIncluded(isInteractive);
+    setEditPlanScreens(plan.screens !== undefined && plan.screens !== null ? plan.screens.toString() : '');
+    setEditPlanQuality(plan.quality || '');
+    setEditPlanCompatibility(plan.compatibility !== undefined && plan.compatibility !== null ? plan.compatibility.toString() : '3');
+    setEditPlanUnlimited(plan.unlimited === undefined || plan.unlimited === null || plan.unlimited === 1);
+    setEditPlanCancellation(plan.cancellation === undefined || plan.cancellation === null || plan.cancellation === 1);
     setIsPlanEditModalOpen(true);
   };
 
@@ -229,8 +273,13 @@ function SubscriptionsContent() {
         plan_price: Number(editPlanPrice),
         plan_duration: editPlanDuration,
         plan_description: editPlanDescription.trim(),
-        currency: editPlanCurrencyInput || 'USD',
+        currency: editPlanCurrencyInput || 'INR',
         is_interactive_included: editPlanIsInteractiveIncluded ? 1 : 0,
+        screens: editPlanScreens.trim() !== '' ? Number(editPlanScreens) : null,
+        quality: editPlanQuality.trim() !== '' ? editPlanQuality.trim() : null,
+        compatibility: Number(editPlanCompatibility),
+        unlimited: editPlanUnlimited ? 1 : 0,
+        cancellation: editPlanCancellation ? 1 : 0,
       };
 
       const updated = await planService.update(editingPlan.id, payload);
@@ -335,14 +384,39 @@ function SubscriptionsContent() {
     }
   };
 
+  const getEpochDateString = (epoch: any) => {
+    if (!epoch) return '';
+    const num = Number(epoch);
+    if (isNaN(num)) return '';
+    const ms = num < 10000000000 ? num * 1000 : num;
+    const d = new Date(ms);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handleOpenSubEditModal = (sub: Subscription) => {
     setEditingSubscription(sub);
     setSubStatusInput(sub.status.toString());
-    setSubPaymentStatusInput(sub.payment_status.toString());
+    
+    // Auto-coerce free subscriptions to Success (2) and method FREE on load if they are currently marked as Pending (1)
+    const isFree = sub.paid_amount === 0 || Number(sub.paid_amount) === 0;
+    if (isFree && sub.payment_status.toString() === '1') {
+      setSubPaymentStatusInput('2');
+      setSubPaymentMethodInput(sub.payment_method || 'FREE');
+    } else {
+      setSubPaymentStatusInput(sub.payment_status.toString());
+      setSubPaymentMethodInput(sub.payment_method || 'Manual');
+    }
+
     setSubTxnIdInput(sub.txnId || '');
     setSubCurrencyInput(sub.currency || 'INR');
     setEditCurrSearchQuery(sub.currency || 'INR');
     setSubPaidAmountInput(sub.paid_amount !== undefined ? sub.paid_amount.toString() : '');
+    setSubPaymentDetailsInput(sub.payment_details || '');
+    setSubDateFromInput(getEpochDateString(sub.timestamp_from));
+    setSubDateToInput(getEpochDateString(sub.timestamp_to));
     setIsSubEditModalOpen(true);
   };
 
@@ -352,12 +426,21 @@ function SubscriptionsContent() {
 
     setIsSubmitting(true);
     try {
+      const fromEpoch = subDateFromInput ? Math.floor(new Date(subDateFromInput).getTime() / 1000) : undefined;
+      const toEpoch = subDateToInput ? Math.floor(new Date(subDateToInput).getTime() / 1000) : undefined;
+
+      const isFreeAmount = subPaidAmountInput !== '' && Number(subPaidAmountInput) === 0;
+
       const payload = {
         status: Number(subStatusInput),
-        payment_status: Number(subPaymentStatusInput),
+        payment_status: isFreeAmount ? 2 : Number(subPaymentStatusInput),
         txnId: subTxnIdInput || undefined,
         currency: subCurrencyInput || undefined,
         paid_amount: subPaidAmountInput ? Number(subPaidAmountInput) : undefined,
+        payment_method: isFreeAmount ? (subPaymentMethodInput === 'Razorpay' ? 'FREE' : subPaymentMethodInput) : subPaymentMethodInput || undefined,
+        payment_details: subPaymentDetailsInput || undefined,
+        timestamp_from: fromEpoch,
+        timestamp_to: toEpoch,
       };
 
       const updated = await subscriptionService.update(editingSubscription.subscriptionId, payload);
@@ -414,10 +497,31 @@ function SubscriptionsContent() {
       header: 'Plan',
       cell: ({ row }) => {
         const plan = plans.find(p => p.id === row.original.planId);
+        if (!plan) return <span className="text-muted-foreground">Plan #{row.original.planId}</span>;
+        
+        const isInteractive = plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1;
+        const hasQuality = plan.quality && plan.quality !== '' && plan.quality.toLowerCase() !== 'none';
+        const isInteractiveOnly = isInteractive && !hasQuality;
+        
         return (
-          <div>
-            <span className="font-semibold text-sm">{plan?.plan_name || `Plan #${row.original.planId}`}</span>
-            {plan?.plan_duration && <span className="text-xs text-muted-foreground block">{plan.plan_duration}</span>}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-sm text-white">{plan.plan_name}</span>
+              {isInteractiveOnly && (
+                <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/10">
+                  Interactive Only
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{plan.plan_duration}</span>
+              <span>•</span>
+              {hasQuality ? (
+                <span>{plan.screens} screen{Number(plan.screens) > 1 ? 's' : ''} ({plan.quality})</span>
+              ) : (
+                <span>No standard streams</span>
+              )}
+            </div>
           </div>
         );
       }
@@ -427,7 +531,7 @@ function SubscriptionsContent() {
       header: 'Amount', 
       cell: ({ row }) => {
         const amt = row.original.paid_amount !== undefined ? row.original.paid_amount : row.original.price_amount;
-        const cur = row.original.currency || 'USD';
+        const cur = row.original.currency || 'INR';
         return (
           <span className="font-semibold text-sm font-mono text-white">
             {cur === 'INR' ? `₹${amt || 0}` : formatCurrency(amt || 0)}
@@ -605,8 +709,11 @@ function SubscriptionsContent() {
               {plans.length > 0 ? (
                 plans.map((plan) => {
                   const isActive = plan.status === 1 || plan.status === 'active';
-                  const planCurrency = currencies.find(c => c.code.toUpperCase() === (plan.currency || 'USD').toUpperCase());
+                  const planCurrency = currencies.find(c => c.code.toUpperCase() === (plan.currency || 'INR').toUpperCase());
                   const symbol = planCurrency?.symbol || plan.currency || '$';
+                  const isInteractive = plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1;
+                  const hasQuality = plan.quality && plan.quality !== '' && plan.quality.toLowerCase() !== 'none';
+                  const isInteractiveOnly = isInteractive && !hasQuality;
                   return (
                     <div key={plan.id} className="relative group">
                       <div className={cn(
@@ -619,14 +726,21 @@ function SubscriptionsContent() {
                             <div className="p-3 rounded-2xl bg-primary/10 text-primary">
                               <Shield className="w-6 h-6" />
                             </div>
-                            <span className={cn(
-                              "px-3 py-1 text-[10px] font-extrabold rounded-full tracking-wider uppercase border",
-                              isActive 
-                                ? "bg-green-500/10 text-green-500 border-green-500/20" 
-                                : "bg-red-500/10 text-red-500 border-red-500/20"
-                            )}>
-                              {isActive ? 'ACTIVE' : 'INACTIVE'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "px-3 py-1 text-[10px] font-extrabold rounded-full tracking-wider uppercase border",
+                                isActive 
+                                  ? "bg-green-500/10 text-green-500 border-green-500/20" 
+                                  : "bg-red-500/10 text-red-500 border-red-500/20"
+                              )}>
+                                {isActive ? 'ACTIVE' : 'INACTIVE'}
+                              </span>
+                              {isInteractiveOnly && (
+                                <span className="px-3 py-1 text-[10px] font-extrabold rounded-full tracking-wider uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                                  Interactive Only
+                                </span>
+                              )}
+                            </div>
                           </div>
         
                           <div className="space-y-2 mb-8">
@@ -641,18 +755,66 @@ function SubscriptionsContent() {
                             <p className="text-sm text-muted-foreground leading-relaxed">
                               {plan.plan_description || 'No description provided.'}
                             </p>
-                            <div className="flex items-center gap-3 text-sm text-white/80">
-                              <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                              <span>Standard Quality Streams</span>
-                            </div>
+                            {isInteractiveOnly && (
+                              <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 font-semibold flex items-start gap-2 leading-relaxed">
+                                <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" />
+                                <span>Recommended: This plan provides access to Interactive Movies only. Standard video streams are not included.</span>
+                              </div>
+                            )}
+                            {plan.quality && plan.quality !== '' && plan.quality.toLowerCase() !== 'none' ? (
+                              <div className="flex items-center gap-3 text-sm text-white/80">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>Standard Quality Streams ({plan.quality})</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground/50 line-through">
+                                <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                                <span>Standard Quality Streams</span>
+                              </div>
+                            )}
                             <div className="flex items-center gap-3 text-sm text-white/80">
                               {plan.is_interactive_included === 1 || (plan as any).isInteractiveIncluded === 1 ? (
-                                <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                <>
+                                  <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                  <span>{isInteractiveOnly ? "Premium Interactive Movies Only" : "Includes Premium Interactive Movies"}</span>
+                                </>
                               ) : (
-                                <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                                <>
+                                  <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                                  <span>Includes Premium Interactive Movies</span>
+                                </>
                               )}
-                              <span>Includes Premium Interactive Movies</span>
                             </div>
+                            {plan.screens && Number(plan.screens) > 0 ? (
+                              <div className="flex items-center gap-3 text-sm text-white/80">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>Screens concurrently: {plan.screens}</span>
+                              </div>
+                            ) : null}
+                            {plan.compatibility ? (
+                              <div className="flex items-center gap-3 text-sm text-white/80">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>
+                                  Access on: {
+                                    Number(plan.compatibility) === 1 ? "Mobile & Tablet" :
+                                    Number(plan.compatibility) === 2 ? "Mobile, Tablet, Laptop" :
+                                    "All Devices (Mobile, Tablet, PC, TV)"
+                                  }
+                                </span>
+                              </div>
+                            ) : null}
+                            {plan.unlimited === 1 || (plan as any).unlimited === 1 ? (
+                              <div className="flex items-center gap-3 text-sm text-white/80">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>Unlimited Streaming Access</span>
+                              </div>
+                            ) : null}
+                            {plan.cancellation === 1 || (plan as any).cancellation === 1 ? (
+                              <div className="flex items-center gap-3 text-sm text-white/80">
+                                <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                <span>Cancel Subscription Anytime</span>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
       
@@ -760,6 +922,31 @@ function SubscriptionsContent() {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
+                <select
+                  value={planType}
+                  onChange={(e) => {
+                    const val = e.target.value as 'standard' | 'interactive' | 'both';
+                    setPlanType(val);
+                    if (val === 'standard') {
+                      setPlanIsInteractiveIncluded(false);
+                    } else if (val === 'interactive') {
+                      setPlanIsInteractiveIncluded(true);
+                      setPlanScreens('');
+                      setPlanQuality('');
+                    } else {
+                      setPlanIsInteractiveIncluded(true);
+                    }
+                  }}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                >
+                  <option value="both" className="bg-card">All-In-One (Standard Streams + Interactive Movies)</option>
+                  <option value="standard" className="bg-card">Standard Streams Only</option>
+                  <option value="interactive" className="bg-card">Interactive Movies Only</option>
+                </select>
+              </div>
+
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground">Price</label>
@@ -839,16 +1026,86 @@ function SubscriptionsContent() {
                 </div>
               </div>
 
+              {planType !== 'interactive' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Screens Limit</label>
+                    <input 
+                      type="number"
+                      value={planScreens}
+                      onChange={(e) => setPlanScreens(e.target.value)}
+                      placeholder="e.g. 2"
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Stream Quality</label>
+                    <select
+                      value={planQuality}
+                      onChange={(e) => setPlanQuality(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                    >
+                      <option value="" className="bg-card">None (Interactive-only)</option>
+                      <option value="SD" className="bg-card">SD (480p)</option>
+                      <option value="HD" className="bg-card">HD (720p)</option>
+                      <option value="Full HD" className="bg-card">Full HD (1080p)</option>
+                      <option value="Ultra HD (4K)" className="bg-card">Ultra HD (4K)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Supported Devices</label>
+                <select
+                  value={planCompatibility}
+                  onChange={(e) => setPlanCompatibility(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                >
+                  <option value="1" className="bg-card">Mobile & Tablet only</option>
+                  <option value="2" className="bg-card">Mobile, Tablet & Browser</option>
+                  <option value="3" className="bg-card">All Devices (Mobile, Tablet, PC, TV)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {planType === 'both' && (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={planIsInteractiveIncluded}
+                      onChange={(e) => setPlanIsInteractiveIncluded(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <span className="font-semibold text-xs text-white">
+                      Includes Premium Interactive Movies
+                    </span>
+                  </label>
+                )}
+
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={planUnlimited}
+                    onChange={(e) => setPlanUnlimited(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                  />
+                  <span className="font-semibold text-xs text-white">
+                    Unlimited Streams
+                  </span>
+                </label>
+              </div>
+
               <div className="space-y-1.5 pt-1">
                 <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                   <input 
                     type="checkbox"
-                    checked={planIsInteractiveIncluded}
-                    onChange={(e) => setPlanIsInteractiveIncluded(e.target.checked)}
+                    checked={planCancellation}
+                    onChange={(e) => setPlanCancellation(e.target.checked)}
                     className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
                   />
                   <span className="font-semibold text-xs text-white">
-                    Includes access to premium interactive movies
+                    Free Cancellation (Cancel Subscription Anytime)
                   </span>
                 </label>
               </div>
@@ -923,6 +1180,31 @@ function SubscriptionsContent() {
                   className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
                   required
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
+                <select
+                  value={editPlanType}
+                  onChange={(e) => {
+                    const val = e.target.value as 'standard' | 'interactive' | 'both';
+                    setEditPlanType(val);
+                    if (val === 'standard') {
+                      setEditPlanIsInteractiveIncluded(false);
+                    } else if (val === 'interactive') {
+                      setEditPlanIsInteractiveIncluded(true);
+                      setEditPlanScreens('');
+                      setEditPlanQuality('');
+                    } else {
+                      setEditPlanIsInteractiveIncluded(true);
+                    }
+                  }}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                >
+                  <option value="both" className="bg-card">All-In-One (Standard Streams + Interactive Movies)</option>
+                  <option value="standard" className="bg-card">Standard Streams Only</option>
+                  <option value="interactive" className="bg-card">Interactive Movies Only</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
@@ -1004,16 +1286,86 @@ function SubscriptionsContent() {
                 </div>
               </div>
 
+              {editPlanType !== 'interactive' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Screens Limit</label>
+                    <input 
+                      type="number"
+                      value={editPlanScreens}
+                      onChange={(e) => setEditPlanScreens(e.target.value)}
+                      placeholder="e.g. 2"
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground">Stream Quality</label>
+                    <select
+                      value={editPlanQuality}
+                      onChange={(e) => setEditPlanQuality(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                    >
+                      <option value="" className="bg-card">None (Interactive-only)</option>
+                      <option value="SD" className="bg-card">SD (480p)</option>
+                      <option value="HD" className="bg-card">HD (720p)</option>
+                      <option value="Full HD" className="bg-card">Full HD (1080p)</option>
+                      <option value="Ultra HD (4K)" className="bg-card">Ultra HD (4K)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground">Supported Devices</label>
+                <select
+                  value={editPlanCompatibility}
+                  onChange={(e) => setEditPlanCompatibility(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                >
+                  <option value="1" className="bg-card">Mobile & Tablet only</option>
+                  <option value="2" className="bg-card">Mobile, Tablet & Browser</option>
+                  <option value="3" className="bg-card">All Devices (Mobile, Tablet, PC, TV)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {editPlanType === 'both' && (
+                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={editPlanIsInteractiveIncluded}
+                      onChange={(e) => setEditPlanIsInteractiveIncluded(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <span className="font-semibold text-xs text-white">
+                      Includes Premium Interactive Movies
+                    </span>
+                  </label>
+                )}
+
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input 
+                    type="checkbox"
+                    checked={editPlanUnlimited}
+                    onChange={(e) => setEditPlanUnlimited(e.target.checked)}
+                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                  />
+                  <span className="font-semibold text-xs text-white">
+                    Unlimited Streams
+                  </span>
+                </label>
+              </div>
+
               <div className="space-y-1.5 pt-1">
                 <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                   <input 
                     type="checkbox"
-                    checked={editPlanIsInteractiveIncluded}
-                    onChange={(e) => setEditPlanIsInteractiveIncluded(e.target.checked)}
+                    checked={editPlanCancellation}
+                    onChange={(e) => setEditPlanCancellation(e.target.checked)}
                     className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
                   />
                   <span className="font-semibold text-xs text-white">
-                    Includes access to premium interactive movies
+                    Free Cancellation (Cancel Subscription Anytime)
                   </span>
                 </label>
               </div>
@@ -1336,6 +1688,59 @@ function SubscriptionsContent() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Payment Method</label>
+                  <select
+                    value={subPaymentMethodInput}
+                    onChange={(e) => setSubPaymentMethodInput(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                  >
+                    <option value="Razorpay" className="bg-card">Razorpay</option>
+                    <option value="Stripe" className="bg-card">Stripe</option>
+                    <option value="PayPal" className="bg-card">PayPal</option>
+                    <option value="Manual" className="bg-card">Manual</option>
+                    <option value="FREE" className="bg-card">FREE</option>
+                    <option value="N/A" className="bg-card">N/A</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Payment Details / ID</label>
+                  <input 
+                    type="text"
+                    value={subPaymentDetailsInput}
+                    onChange={(e) => setSubPaymentDetailsInput(e.target.value)}
+                    placeholder="e.g. gateway_id"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Valid From</label>
+                  <input 
+                    type="date"
+                    value={subDateFromInput}
+                    onChange={(e) => setSubDateFromInput(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Valid Until</label>
+                  <input 
+                    type="date"
+                    value={subDateToInput}
+                    onChange={(e) => setSubDateToInput(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5 relative">
                   <label className="text-xs font-semibold text-muted-foreground">Currency</label>
                   <div className="relative">
@@ -1389,7 +1794,14 @@ function SubscriptionsContent() {
                     type="number"
                     step="0.01"
                     value={subPaidAmountInput}
-                    onChange={(e) => setSubPaidAmountInput(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSubPaidAmountInput(val);
+                      if (val !== '' && Number(val) === 0) {
+                        setSubPaymentStatusInput('2'); // Success/Paid
+                        setSubPaymentMethodInput('FREE'); // FREE Method
+                      }
+                    }}
                     placeholder="e.g. 14.99"
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
                   />

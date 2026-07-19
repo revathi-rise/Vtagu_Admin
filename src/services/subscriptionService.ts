@@ -9,6 +9,7 @@ export interface Subscription {
   timestamp_from: string | number;
   timestamp_to: string | number;
   payment_method?: string;
+  payment_details?: string;
   price_amount?: number;
   paid_amount?: number;
   currency?: string;

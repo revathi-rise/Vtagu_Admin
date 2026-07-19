@@ -12,6 +12,11 @@ export interface Plan {
   currency?: string;
   created_at?: string;
   is_interactive_included?: number;
+  screens?: number | string | null;
+  quality?: string | null;
+  compatibility?: number | null;
+  unlimited?: number | null;
+  cancellation?: number | null;
 }
 
 export const planService = {
