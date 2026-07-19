@@ -14,12 +14,17 @@ export interface Currency {
 export const currencyService = {
   getAll: async (): Promise<Currency[]> => {
     const response = await apiClient.get<{ status: boolean; data: Currency[] }>('/currencies');
-    return response.data?.data || response.data || [];
+    const data = response.data?.data || response.data || [];
+    return data.map(c => c.code.toUpperCase() === 'INR' ? { ...c, symbol: '₹' } : c);
   },
 
   getById: async (id: number): Promise<Currency> => {
     const response = await apiClient.get<{ status: boolean; data: Currency }>(`/currencies/${id}`);
-    return response.data?.data || response.data;
+    const data = response.data?.data || response.data;
+    if (data && data.code && data.code.toUpperCase() === 'INR') {
+      data.symbol = '₹';
+    }
+    return data;
   },
 
   create: async (data: Partial<Currency>): Promise<Currency> => {
