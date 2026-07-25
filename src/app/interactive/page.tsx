@@ -54,6 +54,7 @@ export default function InteractiveEditorPage() {
   // Scene Preview Modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewScene, setPreviewScene] = useState<Scene | null>(null);
+  const [previewSubtitleBlobs, setPreviewSubtitleBlobs] = useState<{ language: string; label: string; url: string; originalUrl: string }[]>([]);
   
   // Choice Modal state
   const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
@@ -155,6 +156,40 @@ export default function InteractiveEditorPage() {
       setScenes([]);
     }
   }, [selectedMovieId, manualMovieId, useManualId]);
+
+  useEffect(() => {
+    if (!previewScene || !(previewScene as any).subtitles || (previewScene as any).subtitles.length === 0) {
+      setPreviewSubtitleBlobs([]);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchSubtitles = async () => {
+      try {
+        const fetched = await Promise.all(((previewScene as any).subtitles).map(async (sub: any) => {
+          try {
+            const response = await fetch(sub.url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const text = await response.text();
+            const blob = new Blob([text], { type: 'text/vtt' });
+            const blobUrl = URL.createObjectURL(blob);
+            return { ...sub, url: blobUrl, originalUrl: sub.url };
+          } catch (e) {
+            console.warn('Failed to load subtitle via fetch, falling back to original URL:', sub.url, e);
+            return { ...sub, originalUrl: sub.url };
+          }
+        }));
+        if (isMounted) setPreviewSubtitleBlobs(fetched);
+      } catch (e) {
+        console.error('Error fetching subtitles', e);
+      }
+    };
+    fetchSubtitles();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [previewScene]);
 
   const handleMovieSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -797,8 +832,14 @@ export default function InteractiveEditorPage() {
                                </span>
                                <span>{scene.choices.length} Branches</span>
                              </div>
+                             <div className="flex items-center justify-between">
+                               <span className="flex items-center gap-1">
+                                 <Type className="w-3.5 h-3.5 text-primary" />
+                                 {((scene as any).subtitles || []).length} Subtitle{((scene as any).subtitles || []).length !== 1 ? 's' : ''} attached
+                               </span>
+                             </div>
                              {scene.is_ending && (
-                               <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold rounded-lg uppercase tracking-wide text-center">
+                               <div className="px-2 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold rounded-lg uppercase tracking-wide text-center mt-1">
                                  Flow Ending Scene
                                </div>
                              )}
@@ -1523,7 +1564,18 @@ export default function InteractiveEditorPage() {
                     controls 
                     autoPlay
                     className="w-full h-full rounded-xl object-contain shadow-lg"
-                  />
+                  >
+                    {previewSubtitleBlobs.map((sub, idx) => (
+                      <track
+                        key={idx}
+                        kind="subtitles"
+                        srcLang={sub.language}
+                        label={sub.label}
+                        src={sub.url}
+                        default={idx === 0}
+                      />
+                    ))}
+                  </video>
                 );
               })()}
             </div>

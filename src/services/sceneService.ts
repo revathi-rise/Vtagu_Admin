@@ -19,6 +19,7 @@ export interface Scene {
   show_choices_on?: string;
   is_ending?: boolean;
   end_text?: string;
+  subtitles?: { language: string; label: string; url: string }[];
 }
 
 export const sceneService = {
@@ -44,12 +45,12 @@ export const sceneService = {
   },
 
   // Scenes CRUD
-  createScene: async (data: { movie_id: number; scene_name: string; scene_url: string; show_choices_on?: string; is_ending?: boolean; end_text?: string }) => {
+  createScene: async (data: { movie_id: number; scene_name: string; scene_url: string; show_choices_on?: string; is_ending?: boolean; end_text?: string; subtitles?: { language: string; label: string; url: string }[] }) => {
     const response = await apiClient.post<{ status: string; data: Scene }>('/scenes', data);
     return response.data.data;
   },
 
-  updateScene: async (id: number, data: { scene_name?: string; scene_url?: string; show_choices_on?: string; is_ending?: boolean; end_text?: string }) => {
+  updateScene: async (id: number, data: { scene_name?: string; scene_url?: string; show_choices_on?: string; is_ending?: boolean; end_text?: string; subtitles?: { language: string; label: string; url: string }[] }) => {
     const response = await apiClient.put<{ status: string; data: Scene }>(`/scenes/${id}`, data);
     return response.data.data;
   },
