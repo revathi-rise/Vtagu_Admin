@@ -25,6 +25,7 @@ export interface Episode {
     video?: EpisodeMedia;
     trailer?: EpisodeMedia;
   };
+  subtitles?: { language: string; label: string; url: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -47,6 +48,7 @@ export interface EpisodePayload {
   rating?: number;
   featured?: boolean;
   free?: boolean;
+  subtitles?: { language: string; label: string; url: string }[];
 }
 
 export const episodeService = {

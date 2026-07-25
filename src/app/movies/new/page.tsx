@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
@@ -15,7 +15,9 @@ import {
   Trash2,
   ChevronDown,
   Eye,
-  X
+  X,
+  Plus,
+  Type
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -47,6 +49,11 @@ const movieSchema = z.object({
   actors: z.string().min(1, 'Actors are required'),
   genre_id: z.number().optional(),
   country_id: z.number().optional(),
+  subtitles: z.array(z.object({
+    language: z.string().min(1, 'Code required'),
+    label: z.string().min(1, 'Label required'),
+    url: z.string().min(1, 'URL required')
+  })).optional(),
 });
 
 type MovieFormValues = z.infer<typeof movieSchema>;
@@ -127,6 +134,7 @@ export default function NewMoviePage() {
   const [isUploading, setIsUploading] = React.useState(false);
   const { 
     register, 
+    control,
     handleSubmit, 
     formState: { errors, isSubmitting },
     watch,
@@ -145,7 +153,13 @@ export default function NewMoviePage() {
       genre_id: 4,
       country_id: 1,
       card_image: '',
+      subtitles: [],
     }
+  });
+
+  const { fields: subtitleFields, append: appendSubtitle, remove: removeSubtitle } = useFieldArray({
+    control,
+    name: "subtitles"
   });
 
   const isInteractive = watch('is_interactive');
@@ -256,7 +270,8 @@ export default function NewMoviePage() {
           card_image: data.card_image ? { url: data.card_image, alt: `${data.title} Card` } : undefined,
           video: data.url ? { url: data.url, alt: `${data.title} Video` } : undefined,
           trailer: data.trailer_url ? { url: data.trailer_url, alt: `${data.title} Trailer` } : undefined,
-        }
+        },
+        subtitles: data.subtitles
       };
 
       await movieService.create(payload);
@@ -574,6 +589,72 @@ export default function NewMoviePage() {
                 {errors.card_image && <p className="text-xs text-destructive mt-1.5">{errors.card_image.message}</p>}
               </div>
             </div>
+          </section>
+
+          {/* Subtitles */}
+          <section className="bg-card border border-border rounded-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-primary font-semibold">
+                <Type className="w-5 h-5" />
+                Subtitles
+              </div>
+              <button
+                type="button"
+                onClick={() => appendSubtitle({ language: '', label: '', url: '' })}
+                className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add Subtitle
+              </button>
+            </div>
+            
+            {subtitleFields.length === 0 ? (
+              <div className="text-center p-6 border-2 border-dashed border-border/80 rounded-xl bg-muted/10">
+                <p className="text-sm text-muted-foreground">No subtitles added yet. Click "Add Subtitle" to include WebVTT files.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {subtitleFields.map((field, index) => (
+                  <div key={field.id} className="p-4 bg-muted/30 border border-border rounded-xl space-y-4 relative group">
+                    <button
+                      type="button"
+                      onClick={() => removeSubtitle(index)}
+                      className="absolute top-2 right-2 p-1.5 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <div className="grid grid-cols-2 gap-4 pr-8">
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-foreground/80">Code (e.g. en)</label>
+                        <input
+                          {...register(`subtitles.${index}.language`)}
+                          placeholder="en"
+                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                        />
+                        {errors.subtitles?.[index]?.language && <p className="text-[10px] text-destructive mt-1">{errors.subtitles[index]?.language?.message}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-foreground/80">Label (e.g. English)</label>
+                        <input
+                          {...register(`subtitles.${index}.label`)}
+                          placeholder="English"
+                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                        />
+                        {errors.subtitles?.[index]?.label && <p className="text-[10px] text-destructive mt-1">{errors.subtitles[index]?.label?.message}</p>}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-foreground/80">Subtitle URL (.vtt)</label>
+                      <input
+                        {...register(`subtitles.${index}.url`)}
+                        placeholder="https://..."
+                        className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                      />
+                      {errors.subtitles?.[index]?.url && <p className="text-[10px] text-destructive mt-1">{errors.subtitles[index]?.url?.message}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 

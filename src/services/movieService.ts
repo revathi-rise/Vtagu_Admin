@@ -49,6 +49,7 @@ export interface Movie {
     video?: MovieMedia;
     trailer?: MovieMedia;
   };
+  subtitles?: { language: string; label: string; url: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -84,6 +85,7 @@ export interface MoviePayload {
     video?: { url: string; alt?: string };
     trailer?: { url: string; alt?: string };
   };
+  subtitles?: { language: string; label: string; url: string }[];
 }
 
 

@@ -19,7 +19,8 @@ import {
   Sparkles,
   Upload,
   Eye,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Type
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sceneService, Scene, Choice } from '@/services/sceneService';
@@ -48,6 +49,7 @@ export default function InteractiveEditorPage() {
   const [showChoicesOn, setShowChoicesOn] = useState('00:00:00');
   const [isEnding, setIsEnding] = useState(false);
   const [endText, setEndText] = useState('');
+  const [sceneSubtitles, setSceneSubtitles] = useState<{ language: string; label: string; url: string }[]>([]);
 
   // Scene Preview Modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -384,6 +386,7 @@ export default function InteractiveEditorPage() {
     setShowChoicesOn('00:00:00');
     setIsEnding(false);
     setEndText('');
+    setSceneSubtitles([]);
     setIsSceneModalOpen(true);
   };
 
@@ -394,6 +397,7 @@ export default function InteractiveEditorPage() {
     setShowChoicesOn(scene.show_choices_on || (scene as any).show_on || '00:00:00');
     setIsEnding(Boolean(scene.is_ending));
     setEndText(scene.end_text || '');
+    setSceneSubtitles((scene as any).subtitles || []);
     setIsSceneModalOpen(true);
   };
 
@@ -415,7 +419,8 @@ export default function InteractiveEditorPage() {
           scene_url: sceneUrl.trim(),
           show_choices_on: showChoicesOn.trim(),
           is_ending: isEnding,
-          end_text: isEnding ? endText.trim() : ''
+          end_text: isEnding ? endText.trim() : '',
+          subtitles: sceneSubtitles
         });
       } else {
         // Create Scene
@@ -425,7 +430,8 @@ export default function InteractiveEditorPage() {
           scene_url: sceneUrl.trim(),
           show_choices_on: showChoicesOn.trim(),
           is_ending: isEnding,
-          end_text: isEnding ? endText.trim() : ''
+          end_text: isEnding ? endText.trim() : '',
+          subtitles: sceneSubtitles
         });
       }
       loadScenes(activeMovieId);
@@ -993,6 +999,91 @@ export default function InteractiveEditorPage() {
                   />
                 </div>
               )}
+
+              {/* Subtitles Section */}
+              <div className="space-y-4 pt-2 border-t border-border/30">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Type className="w-4 h-4 text-primary" />
+                    Subtitles (.vtt)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setSceneSubtitles([...sceneSubtitles, { language: '', label: '', url: '' }])}
+                    className="flex items-center gap-1.5 text-xs font-semibold bg-primary/10 text-primary px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Subtitle
+                  </button>
+                </div>
+                
+                {sceneSubtitles.length === 0 ? (
+                  <div className="text-center p-4 border border-dashed border-border/80 rounded-xl bg-muted/10">
+                    <p className="text-xs text-muted-foreground">No subtitles added. Click "Add Subtitle" to include WebVTT files.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                    {sceneSubtitles.map((sub, index) => (
+                      <div key={index} className="p-3 bg-muted/30 border border-border rounded-xl space-y-3 relative group">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSubs = [...sceneSubtitles];
+                            newSubs.splice(index, 1);
+                            setSceneSubtitles(newSubs);
+                          }}
+                          className="absolute top-2 right-2 p-1 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="grid grid-cols-2 gap-3 pr-6">
+                          <div>
+                            <label className="block text-[10px] font-medium mb-1 text-foreground/80 uppercase">Code (e.g. en)</label>
+                            <input
+                              value={sub.language}
+                              onChange={(e) => {
+                                const newSubs = [...sceneSubtitles];
+                                newSubs[index].language = e.target.value;
+                                setSceneSubtitles(newSubs);
+                              }}
+                              placeholder="en"
+                              required
+                              className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-primary/20 text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-medium mb-1 text-foreground/80 uppercase">Label (e.g. English)</label>
+                            <input
+                              value={sub.label}
+                              onChange={(e) => {
+                                const newSubs = [...sceneSubtitles];
+                                newSubs[index].label = e.target.value;
+                                setSceneSubtitles(newSubs);
+                              }}
+                              placeholder="English"
+                              required
+                              className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-primary/20 text-white"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium mb-1 text-foreground/80 uppercase">Subtitle URL</label>
+                          <input
+                            value={sub.url}
+                            onChange={(e) => {
+                              const newSubs = [...sceneSubtitles];
+                              newSubs[index].url = e.target.value;
+                              setSceneSubtitles(newSubs);
+                            }}
+                            placeholder="https://..."
+                            required
+                            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-border/50">
                 <button
