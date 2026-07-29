@@ -9,6 +9,8 @@ export interface User {
   logged_in: boolean;
   last_login_ip_address: string;
   createdAt: string;
+  is_locked?: boolean;
+  permissions?: string[];
   mobile?: string;
   age?: number;
   gender?: string;
@@ -80,5 +82,30 @@ export const userService = {
       }
       throw error;
     }
+  },
+
+  getAllPermissions: async () => {
+    const response = await apiClient.get<{ status: boolean; data: any[] }>('/users/permissions/list');
+    return response.data.data;
+  },
+
+  updateRole: async (id: number, type: string) => {
+    const response = await apiClient.patch<{ status: boolean; data: User }>(`/users/${id}/role`, { type });
+    return response.data.data;
+  },
+
+  updatePermissions: async (id: number, permissionIds: number[]) => {
+    const response = await apiClient.patch<{ status: boolean; data: User }>(`/users/${id}/permissions`, { permissionIds });
+    return response.data.data;
+  },
+
+  toggleLock: async (id: number, is_locked: boolean) => {
+    const response = await apiClient.patch<{ status: boolean; data: User }>(`/users/${id}/lock`, { is_locked });
+    return response.data.data;
+  },
+
+  create: async (data: any) => {
+    const response = await apiClient.post<{ status: boolean; message: string; data: User }>('/users/register', data);
+    return response.data.data;
   }
 };

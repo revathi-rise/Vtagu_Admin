@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuthStore } from '@/store/use-auth-store';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
@@ -44,6 +45,13 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { hasPermission } = useAuthStore();
+
+  const filteredMenuItems = menuItems.filter(item => {
+    // Dashboard is always visible if they can log in
+    if (item.label === 'Dashboard' || item.label === 'FAQ') return true;
+    return hasPermission(item.label);
+  });
 
   return (
     <div className="w-64 h-screen bg-card border-r border-border flex flex-col fixed left-0 top-0 z-50">
@@ -59,7 +67,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const active = pathname === item.href.split('?')[0];
           return (
             <Link

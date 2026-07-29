@@ -7,11 +7,12 @@ interface AuthState {
   token: string | null;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
+  hasPermission: (permission: string) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       setAuth: (user, token) => {
@@ -26,6 +27,14 @@ export const useAuthStore = create<AuthState>()(
         }
         set({ user: null, token: null });
       },
+      hasPermission: (permission: string) => {
+        const user = get().user;
+        if (!user) return false;
+        // Super Master (type '1') has all permissions
+        if (String(user.type) === '1') return true;
+        // Admins check their specific permissions
+        return user.permissions?.includes(permission) ?? false;
+      }
     }),
     {
       name: 'auth-storage',
