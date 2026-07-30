@@ -22,13 +22,16 @@ import {
   Settings,
   User,
   Coins,
-  Image
+  Image,
+  Video
 } from 'lucide-react';
+
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { icon: Users, label: 'Users', href: '/users' },
   { icon: Film, label: 'Movies', href: '/movies' },
+  { icon: Video, label: 'Shorts', href: '/shorts' },
   { icon: Tv, label: 'Web Series', href: '/series' },
   { icon: Image, label: 'Banners', href: '/posters' },
   { icon: Users2, label: 'Actors', href: '/actors' },
