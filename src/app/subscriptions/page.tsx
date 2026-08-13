@@ -51,6 +51,9 @@ function SubscriptionsContent() {
   const [planName, setPlanName] = useState('');
   const [planPrice, setPlanPrice] = useState('');
   const [planDuration, setPlanDuration] = useState('1 Month');
+  const [planDurationMode, setPlanDurationMode] = useState<'preset' | 'date' | 'custom'>('preset');
+  const [planDurationDate, setPlanDurationDate] = useState('');
+  const [planDurationCustomText, setPlanDurationCustomText] = useState('');
   const [planDescription, setPlanDescription] = useState('');
   const [planCurrencyInput, setPlanCurrencyInput] = useState('INR');
   const [planCurrSearchQuery, setPlanCurrSearchQuery] = useState('INR');
@@ -67,6 +70,9 @@ function SubscriptionsContent() {
   const [editPlanName, setEditPlanName] = useState('');
   const [editPlanPrice, setEditPlanPrice] = useState('');
   const [editPlanDuration, setEditPlanDuration] = useState('');
+  const [editPlanDurationMode, setEditPlanDurationMode] = useState<'preset' | 'date' | 'custom'>('preset');
+  const [editPlanDurationDate, setEditPlanDurationDate] = useState('');
+  const [editPlanDurationCustomText, setEditPlanDurationCustomText] = useState('');
   const [editPlanDescription, setEditPlanDescription] = useState('');
   const [editPlanCurrencyInput, setEditPlanCurrencyInput] = useState('INR');
   const [editPlanCurrSearchQuery, setEditPlanCurrSearchQuery] = useState('');
@@ -183,11 +189,83 @@ function SubscriptionsContent() {
     setIsConfirmModalOpen(true);
   };
 
+  const computeDateFromPeriod = (periodStr: string): string => {
+    const d = new Date();
+    const lower = periodStr.toLowerCase();
+    if (lower.includes('year')) {
+      const years = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      d.setFullYear(d.getFullYear() + years);
+    } else if (lower.includes('month')) {
+      const months = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      d.setMonth(d.getMonth() + months);
+    } else if (lower.includes('day')) {
+      const days = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      d.setDate(d.getDate() + days);
+    } else if (lower.includes('week')) {
+      const weeks = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      d.setDate(d.getDate() + weeks * 7);
+    } else {
+      return '';
+    }
+    return d.toISOString().split('T')[0];
+  };
+
+  const getDurationPreviewText = (
+    mode: 'preset' | 'date' | 'custom',
+    durationStr: string,
+    dateStr: string,
+    customText: string
+  ): string => {
+    const now = new Date();
+    
+    if (mode === 'date' || (dateStr && mode !== 'preset')) {
+      if (dateStr) {
+        const parsed = new Date(dateStr + 'T23:59:59');
+        if (!isNaN(parsed.getTime())) {
+          return `Expires on ${parsed.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        }
+      }
+    }
+
+    const targetVal = mode === 'custom' ? customText : durationStr;
+    const dateMatch = targetVal ? targetVal.match(/\d{4}-\d{2}-\d{2}/) : null;
+    if (dateMatch) {
+      const parsed = new Date(dateMatch[0] + 'T23:59:59');
+      if (!isNaN(parsed.getTime())) {
+        return `Expires on ${parsed.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      }
+    }
+    
+    if (!targetVal) return '';
+
+    const lower = targetVal.toLowerCase();
+    if (lower.includes('year')) {
+      const years = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      now.setFullYear(now.getFullYear() + years);
+    } else if (lower.includes('month')) {
+      const months = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      now.setMonth(now.getMonth() + months);
+    } else if (lower.includes('day')) {
+      const days = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      now.setDate(now.getDate() + days);
+    } else if (lower.includes('week')) {
+      const weeks = parseInt(lower.match(/(\d+)/)?.[1] || '1');
+      now.setDate(now.getDate() + weeks * 7);
+    } else {
+      return '';
+    }
+
+    return `Valid until: ${now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  };
+
   // --- PLANS ACTION HANDLERS ---
   const handleOpenPlanAddModal = () => {
     setPlanName('');
     setPlanPrice('');
     setPlanDuration('1 Month');
+    setPlanDurationMode('preset');
+    setPlanDurationDate(computeDateFromPeriod('1 Month'));
+    setPlanDurationCustomText('');
     setPlanDescription('');
     setPlanCurrencyInput('INR');
     setPlanCurrSearchQuery('INR');
@@ -207,10 +285,14 @@ function SubscriptionsContent() {
 
     setIsSubmitting(true);
     try {
+      const finalDuration = planDurationMode === 'date' 
+        ? (planDurationDate ? `Until ${planDurationDate}` : planDuration)
+        : (planDurationMode === 'custom' ? planDurationCustomText.trim() : planDuration);
+
       const payload: Partial<Plan> = {
         plan_name: planName.trim(),
         plan_price: Number(planPrice),
-        plan_duration: planDuration,
+        plan_duration: finalDuration || '1 Month',
         plan_description: planDescription.trim(),
         currency: planCurrencyInput || 'INR',
         status: 1, // Active by default
@@ -237,7 +319,28 @@ function SubscriptionsContent() {
     setEditingPlan(plan);
     setEditPlanName(plan.plan_name);
     setEditPlanPrice(plan.plan_price.toString());
-    setEditPlanDuration(plan.plan_duration);
+    
+    const durStr = plan.plan_duration || '1 Month';
+    const presets = ['1 Day', '7 Days', '15 Days', '1 Month', '3 Months', '6 Months', '1 Year'];
+    const dateMatch = durStr.match(/\d{4}-\d{2}-\d{2}/);
+
+    if (dateMatch) {
+      setEditPlanDurationMode('date');
+      setEditPlanDurationDate(dateMatch[0]);
+      setEditPlanDuration(durStr.includes('Until') ? durStr : `Until ${dateMatch[0]}`);
+      setEditPlanDurationCustomText('');
+    } else if (presets.includes(durStr)) {
+      setEditPlanDurationMode('preset');
+      setEditPlanDuration(durStr);
+      setEditPlanDurationDate(computeDateFromPeriod(durStr));
+      setEditPlanDurationCustomText('');
+    } else {
+      setEditPlanDurationMode('custom');
+      setEditPlanDuration(durStr);
+      setEditPlanDurationDate('');
+      setEditPlanDurationCustomText(durStr);
+    }
+
     setEditPlanDescription(plan.plan_description || '');
     setEditPlanCurrencyInput(plan.currency || 'INR');
     setEditPlanCurrSearchQuery(plan.currency || 'INR');
@@ -268,10 +371,14 @@ function SubscriptionsContent() {
 
     setIsSubmitting(true);
     try {
+      const finalDuration = editPlanDurationMode === 'date' 
+        ? (editPlanDurationDate ? `Until ${editPlanDurationDate}` : editPlanDuration)
+        : (editPlanDurationMode === 'custom' ? editPlanDurationCustomText.trim() : editPlanDuration);
+
       const payload: Partial<Plan> = {
         plan_name: editPlanName.trim(),
         plan_price: Number(editPlanPrice),
-        plan_duration: editPlanDuration,
+        plan_duration: finalDuration || '1 Month',
         plan_description: editPlanDescription.trim(),
         currency: editPlanCurrencyInput || 'INR',
         is_interactive_included: editPlanIsInteractiveIncluded ? 1 : 0,
@@ -892,71 +999,73 @@ function SubscriptionsContent() {
         <>
           <div 
             onClick={() => setIsPlanAddModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 transition-opacity"
           />
 
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] flex flex-col bg-card border border-border/80 rounded-3xl shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-card/80 backdrop-blur">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
                 Create New Plan
               </h3>
               <button 
                 onClick={() => setIsPlanAddModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveAddPlan} className="space-y-4 mt-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">Plan Name</label>
-                <input 
-                  type="text"
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                  placeholder="e.g. Starter Plan"
-                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
-                <select
-                  value={planType}
-                  onChange={(e) => {
-                    const val = e.target.value as 'standard' | 'interactive' | 'both';
-                    setPlanType(val);
-                    if (val === 'standard') {
-                      setPlanIsInteractiveIncluded(false);
-                    } else if (val === 'interactive') {
-                      setPlanIsInteractiveIncluded(true);
-                      setPlanScreens('');
-                      setPlanQuality('');
-                    } else {
-                      setPlanIsInteractiveIncluded(true);
-                    }
-                  }}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
-                >
-                  <option value="both" className="bg-card">All-In-One (Standard Streams + Interactive Movies)</option>
-                  <option value="standard" className="bg-card">Standard Streams Only</option>
-                  <option value="interactive" className="bg-card">Interactive Movies Only</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
+            <form onSubmit={handleSaveAddPlan} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Price</label>
+                  <label className="text-xs font-semibold text-muted-foreground">Plan Name <span className="text-destructive">*</span></label>
+                  <input 
+                    type="text"
+                    value={planName}
+                    onChange={(e) => setPlanName(e.target.value)}
+                    placeholder="e.g. Starter Plan"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
+                  <select
+                    value={planType}
+                    onChange={(e) => {
+                      const val = e.target.value as 'standard' | 'interactive' | 'both';
+                      setPlanType(val);
+                      if (val === 'standard') {
+                        setPlanIsInteractiveIncluded(false);
+                      } else if (val === 'interactive') {
+                        setPlanIsInteractiveIncluded(true);
+                        setPlanScreens('');
+                        setPlanQuality('');
+                      } else {
+                        setPlanIsInteractiveIncluded(true);
+                      }
+                    }}
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                  >
+                    <option value="both" className="bg-card">All-In-One (Standard + Interactive)</option>
+                    <option value="standard" className="bg-card">Standard Streams Only</option>
+                    <option value="interactive" className="bg-card">Interactive Movies Only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Price <span className="text-destructive">*</span></label>
                   <input 
                     type="number"
                     step="0.01"
                     value={planPrice}
                     onChange={(e) => setPlanPrice(e.target.value)}
                     placeholder="e.g. 29"
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     required
                   />
                 </div>
@@ -974,7 +1083,7 @@ function SubscriptionsContent() {
                       onFocus={() => setIsPlanCurrDropdownOpen(true)}
                       onBlur={() => setTimeout(() => setIsPlanCurrDropdownOpen(false), 200)}
                       placeholder={planCurrencyInput || "e.g. USD"}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white font-semibold font-mono"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-semibold font-mono h-10"
                     />
                   </div>
                   {isPlanCurrDropdownOpen && (
@@ -1007,27 +1116,93 @@ function SubscriptionsContent() {
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    Duration
+              {/* DURATION & EXPIRATION DATE SECTION */}
+              <div className="bg-muted/20 border border-border/70 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Plan Duration & Expiry Date
                   </label>
-                  <select
-                    value={planDuration}
-                    onChange={(e) => setPlanDuration(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
-                  >
-                    <option value="1 Month" className="bg-card">1 Month</option>
-                    <option value="3 Months" className="bg-card">3 Months</option>
-                    <option value="6 Months" className="bg-card">6 Months</option>
-                    <option value="1 Year" className="bg-card">1 Year</option>
-                  </select>
+                  {getDurationPreviewText(planDurationMode, planDuration, planDurationDate, planDurationCustomText) && (
+                    <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {getDurationPreviewText(planDurationMode, planDuration, planDurationDate, planDurationCustomText)}
+                    </span>
+                  )}
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Select Period</span>
+                    <select
+                      value={planDurationMode === 'preset' ? planDuration : 'custom'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setPlanDurationMode('custom');
+                        } else {
+                          setPlanDurationMode('preset');
+                          setPlanDuration(val);
+                          const calcDate = computeDateFromPeriod(val);
+                          if (calcDate) setPlanDurationDate(calcDate);
+                        }
+                      }}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    >
+                      <option value="1 Day" className="bg-card">1 Day</option>
+                      <option value="7 Days" className="bg-card">7 Days</option>
+                      <option value="15 Days" className="bg-card">15 Days</option>
+                      <option value="1 Month" className="bg-card">1 Month</option>
+                      <option value="3 Months" className="bg-card">3 Months</option>
+                      <option value="6 Months" className="bg-card">6 Months</option>
+                      <option value="1 Year" className="bg-card">1 Year</option>
+                      <option value="custom" className="bg-card">Custom Date / Text...</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-primary" />
+                      Manually Pick Expiry Date
+                    </span>
+                    <input 
+                      type="date"
+                      value={planDurationDate}
+                      onChange={(e) => {
+                        const selectedDate = e.target.value;
+                        setPlanDurationDate(selectedDate);
+                        if (selectedDate) {
+                          setPlanDurationMode('date');
+                          setPlanDuration(`Until ${selectedDate}`);
+                        }
+                      }}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    />
+                  </div>
+                </div>
+
+                {planDurationMode === 'custom' && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Custom Duration Text</span>
+                    <input 
+                      type="text"
+                      value={planDurationCustomText}
+                      onChange={(e) => {
+                        setPlanDurationCustomText(e.target.value);
+                        setPlanDuration(e.target.value);
+                      }}
+                      placeholder="e.g. Lifetime, 45 Days, Season 1 Special..."
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               {planType !== 'interactive' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Screens Limit</label>
                     <input 
@@ -1035,7 +1210,7 @@ function SubscriptionsContent() {
                       value={planScreens}
                       onChange={(e) => setPlanScreens(e.target.value)}
                       placeholder="e.g. 2"
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -1043,7 +1218,7 @@ function SubscriptionsContent() {
                     <select
                       value={planQuality}
                       onChange={(e) => setPlanQuality(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     >
                       <option value="" className="bg-card">None (Interactive-only)</option>
                       <option value="SD" className="bg-card">SD (480p)</option>
@@ -1060,7 +1235,7 @@ function SubscriptionsContent() {
                 <select
                   value={planCompatibility}
                   onChange={(e) => setPlanCompatibility(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                 >
                   <option value="1" className="bg-card">Mobile & Tablet only</option>
                   <option value="2" className="bg-card">Mobile, Tablet & Browser</option>
@@ -1068,46 +1243,47 @@ function SubscriptionsContent() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                {planType === 'both' && (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-semibold text-muted-foreground">Plan Options & Features</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {planType === 'both' && (
+                    <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none">
+                      <input 
+                        type="checkbox"
+                        checked={planIsInteractiveIncluded}
+                        onChange={(e) => setPlanIsInteractiveIncluded(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
+                      />
+                      <span className="font-semibold text-xs text-white">
+                        Includes Interactive Movies
+                      </span>
+                    </label>
+                  )}
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none">
                     <input 
                       type="checkbox"
-                      checked={planIsInteractiveIncluded}
-                      onChange={(e) => setPlanIsInteractiveIncluded(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                      checked={planUnlimited}
+                      onChange={(e) => setPlanUnlimited(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
                     />
                     <span className="font-semibold text-xs text-white">
-                      Includes Premium Interactive Movies
+                      Unlimited Streams
                     </span>
                   </label>
-                )}
 
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={planUnlimited}
-                    onChange={(e) => setPlanUnlimited(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
-                  />
-                  <span className="font-semibold text-xs text-white">
-                    Unlimited Streams
-                  </span>
-                </label>
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={planCancellation}
-                    onChange={(e) => setPlanCancellation(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
-                  />
-                  <span className="font-semibold text-xs text-white">
-                    Free Cancellation (Cancel Subscription Anytime)
-                  </span>
-                </label>
+                  <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none sm:col-span-2">
+                    <input 
+                      type="checkbox"
+                      checked={planCancellation}
+                      onChange={(e) => setPlanCancellation(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
+                    />
+                    <span className="font-semibold text-xs text-white">
+                      Free Cancellation (Cancel Subscription Anytime)
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -1121,18 +1297,18 @@ function SubscriptionsContent() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
                 <button
                   type="button"
                   onClick={() => setIsPlanAddModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
+                  className="px-5 py-2.5 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="bg-brand-gradient text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1152,71 +1328,73 @@ function SubscriptionsContent() {
         <>
           <div 
             onClick={() => setIsPlanEditModalOpen(false)}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 transition-opacity"
           />
 
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] flex flex-col bg-card border border-border/80 rounded-3xl shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-card/80 backdrop-blur">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Edit className="w-5 h-5 text-primary" />
                 Edit Plan: {editingPlan.plan_name}
               </h3>
               <button 
                 onClick={() => setIsPlanEditModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditPlan} className="space-y-4 mt-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">Plan Name</label>
-                <input 
-                  type="text"
-                  value={editPlanName}
-                  onChange={(e) => setEditPlanName(e.target.value)}
-                  placeholder="e.g. Starter Plan"
-                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
-                <select
-                  value={editPlanType}
-                  onChange={(e) => {
-                    const val = e.target.value as 'standard' | 'interactive' | 'both';
-                    setEditPlanType(val);
-                    if (val === 'standard') {
-                      setEditPlanIsInteractiveIncluded(false);
-                    } else if (val === 'interactive') {
-                      setEditPlanIsInteractiveIncluded(true);
-                      setEditPlanScreens('');
-                      setEditPlanQuality('');
-                    } else {
-                      setEditPlanIsInteractiveIncluded(true);
-                    }
-                  }}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
-                >
-                  <option value="both" className="bg-card">All-In-One (Standard Streams + Interactive Movies)</option>
-                  <option value="standard" className="bg-card">Standard Streams Only</option>
-                  <option value="interactive" className="bg-card">Interactive Movies Only</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
+            <form onSubmit={handleSaveEditPlan} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Price</label>
+                  <label className="text-xs font-semibold text-muted-foreground">Plan Name <span className="text-destructive">*</span></label>
+                  <input 
+                    type="text"
+                    value={editPlanName}
+                    onChange={(e) => setEditPlanName(e.target.value)}
+                    placeholder="e.g. Starter Plan"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Plan Access Type</label>
+                  <select
+                    value={editPlanType}
+                    onChange={(e) => {
+                      const val = e.target.value as 'standard' | 'interactive' | 'both';
+                      setEditPlanType(val);
+                      if (val === 'standard') {
+                        setEditPlanIsInteractiveIncluded(false);
+                      } else if (val === 'interactive') {
+                        setEditPlanIsInteractiveIncluded(true);
+                        setEditPlanScreens('');
+                        setEditPlanQuality('');
+                      } else {
+                        setEditPlanIsInteractiveIncluded(true);
+                      }
+                    }}
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                  >
+                    <option value="both" className="bg-card">All-In-One (Standard + Interactive)</option>
+                    <option value="standard" className="bg-card">Standard Streams Only</option>
+                    <option value="interactive" className="bg-card">Interactive Movies Only</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Price <span className="text-destructive">*</span></label>
                   <input 
                     type="number"
                     step="0.01"
                     value={editPlanPrice}
                     onChange={(e) => setEditPlanPrice(e.target.value)}
                     placeholder="e.g. 29"
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     required
                   />
                 </div>
@@ -1234,7 +1412,7 @@ function SubscriptionsContent() {
                       onFocus={() => setIsEditPlanCurrDropdownOpen(true)}
                       onBlur={() => setTimeout(() => setIsEditPlanCurrDropdownOpen(false), 200)}
                       placeholder={editPlanCurrencyInput || "e.g. USD"}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white font-semibold font-mono"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-semibold font-mono h-10"
                     />
                   </div>
                   {isEditPlanCurrDropdownOpen && (
@@ -1267,27 +1445,93 @@ function SubscriptionsContent() {
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    Duration
+              {/* DURATION & EXPIRATION DATE SECTION */}
+              <div className="bg-muted/20 border border-border/70 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" />
+                    Plan Duration & Expiry Date
                   </label>
-                  <select
-                    value={editPlanDuration}
-                    onChange={(e) => setEditPlanDuration(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
-                  >
-                    <option value="1 Month" className="bg-card">1 Month</option>
-                    <option value="3 Months" className="bg-card">3 Months</option>
-                    <option value="6 Months" className="bg-card">6 Months</option>
-                    <option value="1 Year" className="bg-card">1 Year</option>
-                  </select>
+                  {getDurationPreviewText(editPlanDurationMode, editPlanDuration, editPlanDurationDate, editPlanDurationCustomText) && (
+                    <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {getDurationPreviewText(editPlanDurationMode, editPlanDuration, editPlanDurationDate, editPlanDurationCustomText)}
+                    </span>
+                  )}
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Select Period</span>
+                    <select
+                      value={editPlanDurationMode === 'preset' ? editPlanDuration : 'custom'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setEditPlanDurationMode('custom');
+                        } else {
+                          setEditPlanDurationMode('preset');
+                          setEditPlanDuration(val);
+                          const calcDate = computeDateFromPeriod(val);
+                          if (calcDate) setEditPlanDurationDate(calcDate);
+                        }
+                      }}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    >
+                      <option value="1 Day" className="bg-card">1 Day</option>
+                      <option value="7 Days" className="bg-card">7 Days</option>
+                      <option value="15 Days" className="bg-card">15 Days</option>
+                      <option value="1 Month" className="bg-card">1 Month</option>
+                      <option value="3 Months" className="bg-card">3 Months</option>
+                      <option value="6 Months" className="bg-card">6 Months</option>
+                      <option value="1 Year" className="bg-card">1 Year</option>
+                      <option value="custom" className="bg-card">Custom Date / Text...</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-primary" />
+                      Manually Pick Expiry Date
+                    </span>
+                    <input 
+                      type="date"
+                      value={editPlanDurationDate}
+                      onChange={(e) => {
+                        const selectedDate = e.target.value;
+                        setEditPlanDurationDate(selectedDate);
+                        if (selectedDate) {
+                          setEditPlanDurationMode('date');
+                          setEditPlanDuration(`Until ${selectedDate}`);
+                        }
+                      }}
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                    />
+                  </div>
+                </div>
+
+                {editPlanDurationMode === 'custom' && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[11px] font-medium text-muted-foreground">Custom Duration Text</span>
+                    <input 
+                      type="text"
+                      value={editPlanDurationCustomText}
+                      onChange={(e) => {
+                        setEditPlanDurationCustomText(e.target.value);
+                        setEditPlanDuration(e.target.value);
+                      }}
+                      placeholder="e.g. Lifetime, 45 Days, Season 1 Special..."
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               {editPlanType !== 'interactive' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Screens Limit</label>
                     <input 
@@ -1295,7 +1539,7 @@ function SubscriptionsContent() {
                       value={editPlanScreens}
                       onChange={(e) => setEditPlanScreens(e.target.value)}
                       placeholder="e.g. 2"
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -1303,7 +1547,7 @@ function SubscriptionsContent() {
                     <select
                       value={editPlanQuality}
                       onChange={(e) => setEditPlanQuality(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                     >
                       <option value="" className="bg-card">None (Interactive-only)</option>
                       <option value="SD" className="bg-card">SD (480p)</option>
@@ -1320,7 +1564,7 @@ function SubscriptionsContent() {
                 <select
                   value={editPlanCompatibility}
                   onChange={(e) => setEditPlanCompatibility(e.target.value)}
-                  className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-[38px]"
+                  className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
                 >
                   <option value="1" className="bg-card">Mobile & Tablet only</option>
                   <option value="2" className="bg-card">Mobile, Tablet & Browser</option>
@@ -1328,46 +1572,47 @@ function SubscriptionsContent() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                {editPlanType === 'both' && (
-                  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <div className="space-y-2 pt-1">
+                <label className="text-xs font-semibold text-muted-foreground">Plan Options & Features</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {editPlanType === 'both' && (
+                    <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none">
+                      <input 
+                        type="checkbox"
+                        checked={editPlanIsInteractiveIncluded}
+                        onChange={(e) => setEditPlanIsInteractiveIncluded(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
+                      />
+                      <span className="font-semibold text-xs text-white">
+                        Includes Interactive Movies
+                      </span>
+                    </label>
+                  )}
+
+                  <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none">
                     <input 
                       type="checkbox"
-                      checked={editPlanIsInteractiveIncluded}
-                      onChange={(e) => setEditPlanIsInteractiveIncluded(e.target.checked)}
-                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                      checked={editPlanUnlimited}
+                      onChange={(e) => setEditPlanUnlimited(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
                     />
                     <span className="font-semibold text-xs text-white">
-                      Includes Premium Interactive Movies
+                      Unlimited Streams
                     </span>
                   </label>
-                )}
 
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={editPlanUnlimited}
-                    onChange={(e) => setEditPlanUnlimited(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
-                  />
-                  <span className="font-semibold text-xs text-white">
-                    Unlimited Streams
-                  </span>
-                </label>
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                  <input 
-                    type="checkbox"
-                    checked={editPlanCancellation}
-                    onChange={(e) => setEditPlanCancellation(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer"
-                  />
-                  <span className="font-semibold text-xs text-white">
-                    Free Cancellation (Cancel Subscription Anytime)
-                  </span>
-                </label>
+                  <label className="flex items-center gap-3 p-3 bg-muted/20 border border-border/60 rounded-xl cursor-pointer hover:bg-muted/40 transition-colors select-none sm:col-span-2">
+                    <input 
+                      type="checkbox"
+                      checked={editPlanCancellation}
+                      onChange={(e) => setEditPlanCancellation(e.target.checked)}
+                      className="rounded border-border text-primary focus:ring-0 w-4 h-4 bg-background cursor-pointer accent-primary"
+                    />
+                    <span className="font-semibold text-xs text-white">
+                      Free Cancellation (Cancel Subscription Anytime)
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -1381,18 +1626,18 @@ function SubscriptionsContent() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
                 <button
                   type="button"
                   onClick={() => setIsPlanEditModalOpen(false)}
-                  className="px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
+                  className="px-5 py-2.5 text-sm font-semibold border border-border rounded-xl hover:bg-muted transition-colors text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="bg-brand-gradient text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1415,21 +1660,21 @@ function SubscriptionsContent() {
             className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
           />
 
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] flex flex-col bg-card border border-border/80 rounded-3xl shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-card/80 backdrop-blur">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-primary" />
                 Create User Subscription
               </h3>
               <button 
                 onClick={() => setIsSubAddModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveAddSubscription} className="space-y-4 mt-4">
+            <form onSubmit={handleSaveAddSubscription} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                   <User className="w-3.5 h-3.5" />
@@ -1635,21 +1880,21 @@ function SubscriptionsContent() {
             className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity"
           />
 
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white">
-            <div className="flex items-center justify-between pb-4 border-b border-border/50">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] flex flex-col bg-card border border-border/80 rounded-3xl shadow-2xl z-50 animate-in zoom-in-95 duration-200 text-white overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-card/80 backdrop-blur">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Edit className="w-5 h-5 text-primary" />
                 Edit Subscription: SUB-{editingSubscription.subscriptionId}
               </h3>
               <button 
                 onClick={() => setIsSubEditModalOpen(false)}
-                className="p-1 hover:bg-muted text-muted-foreground hover:text-white rounded-lg transition-colors"
+                className="p-1.5 hover:bg-muted text-muted-foreground hover:text-white rounded-xl transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditSubscription} className="space-y-4 mt-4">
+            <form onSubmit={handleSaveEditSubscription} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Subscription Status</label>
                 <select

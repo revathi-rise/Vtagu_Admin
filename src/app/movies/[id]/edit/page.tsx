@@ -17,7 +17,8 @@ import {
   Eye,
   X,
   Plus,
-  Type
+  Type,
+  Volume2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -53,6 +54,12 @@ const movieSchema = z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
     url: z.string().min(1, 'URL required')
+  })).optional(),
+  audio_tracks: z.array(z.object({
+    language: z.string().min(1, 'Code required'),
+    label: z.string().min(1, 'Label required'),
+    url: z.string().min(1, 'URL required'),
+    isDefault: z.boolean().optional()
   })).optional(),
 });
 
@@ -157,12 +164,18 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
       country_id: 1,
       card_image: '',
       subtitles: [],
+      audio_tracks: [],
     }
   });
 
   const { fields: subtitleFields, append: appendSubtitle, remove: removeSubtitle } = useFieldArray({
     control,
     name: "subtitles"
+  });
+
+  const { fields: audioTrackFields, append: appendAudioTrack, remove: removeAudioTrack } = useFieldArray({
+    control,
+    name: "audio_tracks"
   });
 
   const isInteractive = watch('is_interactive');
@@ -247,6 +260,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('genre_id', data.genre_id || data.genreId || 4, { shouldValidate: true });
           setValue('country_id', data.country_id || data.countryId || 1, { shouldValidate: true });
           setValue('subtitles', data.subtitles || [], { shouldValidate: true });
+          setValue('audio_tracks', data.audio_tracks || [], { shouldValidate: true });
         }
       } catch (error) {
         console.error('Failed to fetch movie details:', error);
@@ -328,7 +342,8 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           video: data.url ? { url: data.url, alt: `${data.title} Video` } : undefined,
           trailer: data.trailer_url ? { url: data.trailer_url, alt: `${data.title} Trailer` } : undefined,
         },
-        subtitles: data.subtitles
+        subtitles: data.subtitles,
+        audio_tracks: data.audio_tracks
       };
 
       if (movieId) {
@@ -711,6 +726,86 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
                         className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
                       />
                       {errors.subtitles?.[index]?.url && <p className="text-[10px] text-destructive mt-1">{errors.subtitles[index]?.url?.message}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Multiple Audio Tracks Section ──────────────────────────────── */}
+          <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Volume2 className="w-5 h-5 text-primary" />
+                  Multiple Audio Tracks (Dubbed Languages)
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Attach multiple language audio files to 1 video to save storage space and bandwidth.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => appendAudioTrack({ language: 'en', label: 'English (Original)', url: '', isDefault: audioTrackFields.length === 0 })}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-semibold transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Audio Track
+              </button>
+            </div>
+
+            {audioTrackFields.length === 0 ? (
+              <div className="text-center py-6 border border-dashed border-border rounded-xl text-xs text-muted-foreground">
+                No audio tracks added. Default original video audio will play.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {audioTrackFields.map((field, index) => (
+                  <div key={field.id} className="relative bg-muted/20 border border-border rounded-xl p-4 space-y-3">
+                    <button
+                      type="button"
+                      onClick={() => removeAudioTrack(index)}
+                      className="absolute top-3 right-3 p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pr-8">
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-foreground/80">Lang Code (e.g. en, hi)</label>
+                        <input
+                          {...register(`audio_tracks.${index}.language`)}
+                          placeholder="en"
+                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1 text-foreground/80">Track Label (e.g. Hindi Dubbed)</label>
+                        <input
+                          {...register(`audio_tracks.${index}.label`)}
+                          placeholder="Hindi Dubbed"
+                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                        />
+                      </div>
+                      <div className="flex items-end pb-2">
+                        <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                          <input
+                            type="checkbox"
+                            {...register(`audio_tracks.${index}.isDefault`)}
+                            className="w-4 h-4 rounded border-border accent-primary"
+                          />
+                          <span>Set as Default Audio</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-foreground/80">Audio Track File URL (.mp3 / .aac / .m4a)</label>
+                      <input
+                        {...register(`audio_tracks.${index}.url`)}
+                        placeholder="https://..."
+                        className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                      />
                     </div>
                   </div>
                 ))}
