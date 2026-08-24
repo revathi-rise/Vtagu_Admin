@@ -42,6 +42,8 @@ export interface Movie {
   viewCount?: number;
   isInteractive?: boolean;
   is_interactive?: boolean;
+  isComingSoon?: boolean;
+  is_coming_soon?: boolean;
   interactiveMap?: unknown;
   media?: {
     image?: MovieMedia;
@@ -80,6 +82,7 @@ export interface MoviePayload {
   age_restriction?: string;
   kids_restriction?: boolean;
   is_interactive?: boolean;
+  is_coming_soon?: boolean;
   media?: {
     image?: { url: string; alt?: string };
     card_image?: { url: string; alt?: string };

@@ -44,6 +44,7 @@ const movieSchema = z.object({
   featured: z.boolean(),
   free: z.boolean(),
   is_interactive: z.boolean(),
+  is_coming_soon: z.boolean().optional(),
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
   actors: z.string().min(1, 'Actors are required'),
@@ -145,6 +146,7 @@ export default function NewMoviePage() {
       featured: false,
       free: false,
       is_interactive: false,
+      is_coming_soon: false,
       year: new Date().getFullYear(),
       languages: '',
       rating: 0,
@@ -265,6 +267,7 @@ export default function NewMoviePage() {
         featured: data.featured,
         free: data.free,
         is_interactive: data.is_interactive,
+        is_coming_soon: data.is_coming_soon,
         media: {
           image: data.movie_image ? { url: data.movie_image, alt: `${data.title} Poster` } : undefined,
           card_image: data.card_image ? { url: data.card_image, alt: `${data.title} Card` } : undefined,
@@ -783,6 +786,10 @@ export default function NewMoviePage() {
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Interactive Content</label>
               <input type="checkbox" {...register('is_interactive')} className="w-5 h-5 rounded border-border" />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Coming Soon</label>
+              <input type="checkbox" {...register('is_coming_soon')} className="w-5 h-5 rounded border-border" />
             </div>
           </section>
 

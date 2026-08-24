@@ -46,6 +46,7 @@ const schema = z.object({
   rating: z.number().min(0).max(10),
   featured: z.boolean(),
   free: z.boolean(),
+  is_coming_soon: z.boolean().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
@@ -160,6 +161,7 @@ export default function EditEpisodePage() {
             rating: ep.rating || 0,
             featured: ep.isFeatured || false,
             free: ep.isFree || false,
+            is_coming_soon: ep.is_coming_soon || ep.isComingSoon || false,
             subtitles: ep.subtitles || [],
           });
 
@@ -232,6 +234,7 @@ export default function EditEpisodePage() {
         rating: data.rating,
         featured: data.featured,
         free: data.free,
+        is_coming_soon: data.is_coming_soon,
         subtitles: data.subtitles,
       };
 
@@ -566,6 +569,10 @@ export default function EditEpisodePage() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Free for All</label>
                 <input type="checkbox" {...register('free')} className="w-5 h-5 rounded border-border accent-primary" />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Coming Soon</label>
+                <input type="checkbox" {...register('is_coming_soon')} className="w-5 h-5 rounded border-border accent-primary" />
               </div>
             </section>
           </div>

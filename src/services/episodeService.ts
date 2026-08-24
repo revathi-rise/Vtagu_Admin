@@ -18,6 +18,8 @@ export interface Episode {
   rating?: number;
   isFeatured?: boolean;
   isFree?: boolean;
+  isComingSoon?: boolean;
+  is_coming_soon?: boolean;
   viewCount?: number;
   media?: {
     poster_image?: EpisodeMedia;
@@ -49,6 +51,7 @@ export interface EpisodePayload {
   rating?: number;
   featured?: boolean;
   free?: boolean;
+  is_coming_soon?: boolean;
   subtitles?: { language: string; label: string; url: string }[];
   audio_tracks?: { language: string; label: string; url: string; isDefault?: boolean }[];
 }
