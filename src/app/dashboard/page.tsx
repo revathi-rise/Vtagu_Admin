@@ -105,6 +105,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
               <p className="text-2xl font-bold tracking-tight">{isLoading ? '...' : stat.value}</p>
             </div>
+          </div>
         ))}
       </div>
 
