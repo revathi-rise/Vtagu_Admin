@@ -3,7 +3,9 @@ import apiClient from '@/lib/api-client';
 export interface DashboardStats {
   totalUsers: number;
   totalMovies: number;
+  totalInteractiveMovies?: number;
   totalSeries: number;
+  totalShorts?: number;
   activeSubs: number;
   revenue: number;
   totalViews: number;

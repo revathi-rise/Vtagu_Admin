@@ -11,7 +11,9 @@ import {
   Eye,
   ArrowUpRight,
   ArrowDownRight,
-  Loader2
+  Loader2,
+  Video,
+  PlaySquare
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { dashboardService } from '@/services/dashboardService';
@@ -27,7 +29,9 @@ export default function DashboardPage() {
   const [stats, setStats] = useState([
     { label: 'Total Users', value: '0', icon: Users, trend: '0%', isUp: true },
     { label: 'Total Movies', value: '0', icon: Film, trend: '0%', isUp: true },
+    { label: 'Interactive Movies', value: '0', icon: PlaySquare, trend: '0%', isUp: true },
     { label: 'Total Series', value: '0', icon: Tv, trend: '0%', isUp: true },
+    { label: 'Shorts', value: '0', icon: Video, trend: '0%', isUp: true },
     { label: 'Active Subs', value: '0', icon: CreditCard, trend: '0%', isUp: true },
     { label: 'Revenue', value: formatCurrency(0), icon: TrendingUp, trend: '0%', isUp: true },
     { label: 'Total Views', value: '0', icon: Eye, trend: '0%', isUp: true },
@@ -50,7 +54,9 @@ export default function DashboardPage() {
       setStats([
         { label: 'Total Users', value: (data.totalUsers || 0).toLocaleString(), icon: Users, trend: '+0%', isUp: true },
         { label: 'Total Movies', value: (data.totalMovies || 0).toLocaleString(), icon: Film, trend: '+0%', isUp: true },
+        { label: 'Interactive Movies', value: (data.totalInteractiveMovies || 0).toLocaleString(), icon: PlaySquare, trend: '+0%', isUp: true },
         { label: 'Total Series', value: (data.totalSeries || 0).toLocaleString(), icon: Tv, trend: '+0%', isUp: true },
+        { label: 'Shorts', value: (data.totalShorts || 0).toLocaleString(), icon: Video, trend: '+0%', isUp: true },
         { label: 'Active Subs', value: (data.activeSubs || 0).toLocaleString(), icon: CreditCard, trend: '+0%', isUp: true },
         { label: 'Revenue', value: formatCurrency(data.revenue || 0), icon: TrendingUp, trend: '+0%', isUp: true },
         { label: 'Total Views', value: (data.totalViews || 0).toLocaleString(), icon: Eye, trend: '+0%', isUp: true },
@@ -77,7 +83,7 @@ export default function DashboardPage() {
         {isLoading && <Loader2 className="w-5 h-5 animate-spin text-primary" />}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
           <div 
             key={i} 
@@ -99,7 +105,6 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
               <p className="text-2xl font-bold tracking-tight">{isLoading ? '...' : stat.value}</p>
             </div>
-          </div>
         ))}
       </div>
 

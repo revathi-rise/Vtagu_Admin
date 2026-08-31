@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { formatDate, cn } from '@/lib/utils';
-import { Mail, Shield, User as UserIcon, Loader2, AlertCircle, Settings2, Lock, Unlock, Check, X, ArrowUpDown } from 'lucide-react';
+import { Mail, Shield, User as UserIcon, Loader2, AlertCircle, Settings2, Lock, Unlock, Check, X, ArrowUpDown, Trash2 } from 'lucide-react';
 import { userService, User } from '@/services/userService';
 import { useAuthStore } from '@/store/use-auth-store';
 
@@ -34,6 +34,17 @@ export default function UsersPage() {
       setUsers([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      try {
+        await userService.delete(userId);
+        fetchUsers();
+      } catch (err: any) {
+        alert(err.response?.data?.message || 'Failed to delete user');
+      }
     }
   };
 
@@ -193,16 +204,27 @@ export default function UsersPage() {
       cell: ({ row }) => {
         const isSuperMaster = String(row.original.type) === '1';
         return (
-          <Link
-            href={isSuperMaster ? '#' : `/users/${row.original.userId}`}
-            className={cn(
-              "p-2 rounded-lg transition-colors flex items-center justify-center border",
-              isSuperMaster ? "border-transparent opacity-30 cursor-not-allowed pointer-events-none" : "hover:bg-muted border-border"
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={isSuperMaster ? '#' : `/users/${row.original.userId}`}
+              className={cn(
+                "p-2 rounded-lg transition-colors flex items-center justify-center border",
+                isSuperMaster ? "border-transparent opacity-30 cursor-not-allowed pointer-events-none" : "hover:bg-muted border-border text-primary"
+              )}
+              title={isSuperMaster ? "Cannot modify Super Master account" : "Manage Access"}
+            >
+              <Settings2 className="w-4 h-4" />
+            </Link>
+            {!isSuperMaster && (
+              <button
+                onClick={() => handleDeleteUser(row.original.userId, row.original.user_name || row.original.email)}
+                className="p-2 rounded-lg transition-colors flex items-center justify-center border border-border text-destructive hover:bg-destructive/10"
+                title="Delete User"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             )}
-            title={isSuperMaster ? "Cannot modify Super Master account" : "Manage Access"}
-          >
-            <Settings2 className={cn("w-4 h-4", isSuperMaster ? "text-muted-foreground" : "text-primary")} />
-          </Link>
+          </div>
         );
       }
     });

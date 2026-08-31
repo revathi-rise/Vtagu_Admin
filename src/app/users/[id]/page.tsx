@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { userService, User } from '@/services/userService';
-import { ArrowLeft, Save, Shield, Lock, ShieldCheck, Check } from 'lucide-react';
+import { ArrowLeft, Save, Shield, Lock, ShieldCheck, Check, Trash2 } from 'lucide-react';
+
 import Link from 'next/link';
 import { useAuthStore } from '@/store/use-auth-store';
 
@@ -23,6 +24,18 @@ export default function ManageUserPage({ params }: { params: Promise<{ id: strin
   const [type, setType] = useState<string>('0');
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  
+  const handleDelete = async () => {
+    if (confirm(`Are you sure you want to delete account "${user?.user_name || user?.email}"? This action cannot be undone.`)) {
+      try {
+        await userService.delete(userId);
+        alert('User deleted successfully.');
+        router.push('/users');
+      } catch (err: any) {
+        alert(err.response?.data?.message || 'Failed to delete user');
+      }
+    }
+  };
   
   useEffect(() => {
     // Only Super Master can access this page
@@ -147,6 +160,16 @@ export default function ManageUserPage({ params }: { params: Promise<{ id: strin
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${isLocked ? 'bg-destructive' : 'bg-muted'}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+                <div className="pt-4 border-t border-border mt-4">
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 text-sm font-medium transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Account
                   </button>
                 </div>
               </div>

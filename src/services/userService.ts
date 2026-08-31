@@ -107,5 +107,10 @@ export const userService = {
   create: async (data: any) => {
     const response = await apiClient.post<{ status: boolean; message: string; data: User }>('/users/register', data);
     return response.data.data;
+  },
+
+  delete: async (id: number) => {
+    const response = await apiClient.delete<{ status: boolean; message: string }>(`/users/${id}`);
+    return response.data;
   }
 };
