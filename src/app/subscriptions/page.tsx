@@ -1170,6 +1170,7 @@ function SubscriptionsContent() {
                     <input 
                       type="date"
                       value={planDurationDate}
+                      onClick={(e) => e.currentTarget.showPicker?.()}
                       onChange={(e) => {
                         const selectedDate = e.target.value;
                         setPlanDurationDate(selectedDate);
@@ -1178,7 +1179,7 @@ function SubscriptionsContent() {
                           setPlanDuration(`Until ${selectedDate}`);
                         }
                       }}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                      className="w-full bg-background border border-border/80 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white h-10 cursor-pointer font-medium hover:border-primary/50"
                     />
                   </div>
                 </div>
@@ -1499,6 +1500,7 @@ function SubscriptionsContent() {
                     <input 
                       type="date"
                       value={editPlanDurationDate}
+                      onClick={(e) => e.currentTarget.showPicker?.()}
                       onChange={(e) => {
                         const selectedDate = e.target.value;
                         setEditPlanDurationDate(selectedDate);
@@ -1507,7 +1509,7 @@ function SubscriptionsContent() {
                           setEditPlanDuration(`Until ${selectedDate}`);
                         }
                       }}
-                      className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 transition-all text-white h-10"
+                      className="w-full bg-background border border-border/80 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white h-10 cursor-pointer font-medium hover:border-primary/50"
                     />
                   </div>
                 </div>
@@ -1746,28 +1748,30 @@ function SubscriptionsContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
                     Valid From
                   </label>
                   <input 
                     type="date"
                     value={dateFromInput}
+                    onClick={(e) => e.currentTarget.showPicker?.()}
                     onChange={(e) => setDateFromInput(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white cursor-pointer font-medium hover:border-primary/50"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
                     Valid Until
                   </label>
                   <input 
                     type="date"
                     value={dateToInput}
+                    onClick={(e) => e.currentTarget.showPicker?.()}
                     onChange={(e) => setDateToInput(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white cursor-pointer font-medium hover:border-primary/50"
                     required
                   />
                 </div>
@@ -1963,23 +1967,31 @@ function SubscriptionsContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Valid From</label>
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    Valid From
+                  </label>
                   <input 
                     type="date"
                     value={subDateFromInput}
+                    onClick={(e) => e.currentTarget.showPicker?.()}
                     onChange={(e) => setSubDateFromInput(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white cursor-pointer font-medium hover:border-primary/50"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Valid Until</label>
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                    Valid Until
+                  </label>
                   <input 
                     type="date"
                     value={subDateToInput}
+                    onClick={(e) => e.currentTarget.showPicker?.()}
                     onChange={(e) => setSubDateToInput(e.target.value)}
-                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    className="w-full bg-background border border-border/80 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/30 focus:border-primary transition-all text-white cursor-pointer font-medium hover:border-primary/50"
                     required
                   />
                 </div>
