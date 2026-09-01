@@ -606,9 +606,15 @@ export default function EditEpisodePage() {
                 <label className="text-sm font-medium">Featured Episode</label>
                 <input type="checkbox" {...register('featured')} className="w-5 h-5 rounded border-border accent-primary" />
               </div>
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Free for All</label>
-                <input type="checkbox" {...register('free')} className="w-5 h-5 rounded border-border accent-primary" />
+              <div className="flex flex-col gap-1.5 border-y border-border/50 py-3 my-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Free for All</label>
+                  <input type="checkbox" {...register('free')} className="w-5 h-5 rounded border-border accent-primary" />
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="text-foreground/80 font-medium">☑ Checked:</span> The episode is Free and anyone can watch it.<br/>
+                  <span className="text-foreground/80 font-medium">☐ Unchecked:</span> The episode is Paid (requires subscription or purchase).
+                </p>
               </div>
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Coming Soon</label>
