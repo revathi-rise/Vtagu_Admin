@@ -22,6 +22,7 @@ import { shortService, ShortPayload } from '@/services/shortService';
 import { genreService, Genre } from '@/services/genreService';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
 const shortSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -185,9 +186,12 @@ export default function EditShortPage({ params }: PageProps) {
     });
   }, [params, reset]);
 
-  const handleThumbnailUpload = async (file: File) => {
+  const [cropModalData, setCropModalData] = React.useState<{ file: File, aspectRatio: number } | null>(null);
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropModalData(null);
     const formData = new FormData();
-    formData.append('file', file, file.name);
+    formData.append('file', croppedBlob, 'cropped-thumbnail.jpg');
     setIsUploading(true);
     try {
       const res = await apiClient.post<{ status: boolean; message?: string; url?: string }>('/upload-image', formData, {
@@ -249,7 +253,8 @@ export default function EditShortPage({ params }: PageProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between pb-5 border-b border-border">
         <div className="flex items-center gap-4">
@@ -339,8 +344,11 @@ export default function EditShortPage({ params }: PageProps) {
                   </div>
                 )}
               </div>
-              <input type="file" id="thumb-edit-upload" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleThumbnailUpload(f); e.target.value = ''; }} accept="image/*" className="hidden" />
+              <input type="file" id="thumb-edit-upload" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCropModalData({ file: f, aspectRatio: 9 / 16 }); e.target.value = ''; }} accept="image/*" className="hidden" />
               <input type="text" value={thumbnailUrl} onChange={(e) => setValue('thumbnail_url', e.target.value)} placeholder="Or paste URL…" className="mt-3 w-full bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white" />
+              <p className="text-xs text-muted-foreground mt-2 px-1 leading-relaxed">
+                <span className="font-semibold text-primary">Note:</span> If no image is uploaded, the frontend will automatically show a thumbnail generated from the video.
+              </p>
             </div>
           </section>
         </div>
@@ -392,5 +400,16 @@ export default function EditShortPage({ params }: PageProps) {
         </div>
       )}
     </form>
+
+      {/* Image Cropper Modal */}
+      {cropModalData ? (
+        <ImageCropperModal
+          imageFile={cropModalData!.file}
+          aspectRatio={cropModalData!.aspectRatio}
+          onClose={() => setCropModalData(null)}
+          onCropComplete={handleCropComplete}
+        />
+      ) : null}
+    </>
   );
 }

@@ -22,6 +22,7 @@ import { shortService, ShortPayload } from '@/services/shortService';
 import { genreService, Genre } from '@/services/genreService';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
 // ─── Zod Schema ───────────────────────────────────────────────────────────────
 
@@ -263,9 +264,12 @@ export default function NewShortPage() {
     if (titleValue) setValue('slug', slugify(titleValue));
   }, [titleValue, setValue]);
 
-  const handleThumbnailUpload = async (file: File) => {
+  const [cropModalData, setCropModalData] = React.useState<{ file: File, aspectRatio: number } | null>(null);
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropModalData(null);
     const formData = new FormData();
-    formData.append('file', file, file.name);
+    formData.append('file', croppedBlob, 'cropped-thumbnail.jpg');
     setIsUploading(true);
     try {
       const res = await apiClient.post<{ status: boolean; message?: string; url?: string }>('/upload-image', formData, {
@@ -401,12 +405,17 @@ export default function NewShortPage() {
               </p>
             </div>
 
-            <ThumbnailUploader
-              value={watch('thumbnail_url') || ''}
-              onChange={(url) => setValue('thumbnail_url', url, { shouldValidate: true })}
-              isUploading={isUploading}
-              onUpload={handleThumbnailUpload}
-            />
+            <div>
+              <ThumbnailUploader
+                value={watch('thumbnail_url') || ''}
+                onChange={(url) => setValue('thumbnail_url', url, { shouldValidate: true })}
+                isUploading={isUploading}
+                onUpload={(file) => setCropModalData({ file, aspectRatio: 9 / 16 })}
+              />
+              <p className="text-xs text-muted-foreground mt-2 px-1 leading-relaxed">
+                <span className="font-semibold text-primary">Note:</span> If no image is uploaded, the frontend will automatically show a thumbnail generated from the video.
+              </p>
+            </div>
           </section>
         </div>
 
@@ -475,5 +484,16 @@ export default function NewShortPage() {
         </div>
       </div>
     </form>
+
+      {/* Image Cropper Modal */}
+      {cropModalData && (
+        <ImageCropperModal
+          imageFile={cropModalData.file}
+          aspectRatio={cropModalData.aspectRatio}
+          onClose={() => setCropModalData(null)}
+          onCropComplete={handleCropComplete}
+        />
+      )}
+    </>
   );
 }

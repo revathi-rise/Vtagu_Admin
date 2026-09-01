@@ -41,7 +41,7 @@ export const shortService = {
   },
 
   getById: async (id: number): Promise<Short> => {
-    const response = await apiClient.get<{ status: boolean; data: Short }>(`/shorts/${id}`);
+    const response = await apiClient.get<{ status: boolean; data: Short }>(`/shorts/${id}?isAdmin=true`);
     return response.data?.data || response.data as any;
   },
 
