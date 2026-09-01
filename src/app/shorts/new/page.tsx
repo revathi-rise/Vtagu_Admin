@@ -320,7 +320,8 @@ export default function NewShortPage() {
     );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
+    <>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10 animate-in slide-in-from-bottom-4 duration-500">
       {/* Page header */}
       <div className="flex items-center justify-between pb-5 border-b border-border">
         <div className="flex items-center gap-4">
