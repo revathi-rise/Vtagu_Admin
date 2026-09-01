@@ -14,10 +14,12 @@ import {
   Loader2,
   Trash2,
   Eye,
+  ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { shortService, ShortPayload } from '@/services/shortService';
+import { genreService, Genre } from '@/services/genreService';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
 
@@ -64,6 +66,68 @@ function Toggle({ label, description, checked, onChange }: {
   );
 }
 
+interface CustomSelectProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+}
+
+function CustomSelect({ label, value, onChange, options, placeholder }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(opt => opt.value === value);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <label className="block text-sm font-medium mb-1.5 text-foreground/90">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between bg-muted/50 border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-left transition-all hover:bg-muted/80 text-white"
+      >
+        <span>{selectedOption ? selectedOption.label : placeholder || 'Select option'}</span>
+        <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isOpen && "transform rotate-180")} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-2xl z-30 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-100 max-h-60 overflow-y-auto">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={cn(
+                "w-full text-left px-4 py-2 text-sm transition-colors text-white",
+                value === opt.value 
+                  ? "text-primary font-semibold bg-primary/10" 
+                  : "text-muted-foreground hover:text-white hover:bg-muted/50"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -74,6 +138,7 @@ export default function EditShortPage({ params }: PageProps) {
   const [isUploading, setIsUploading] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [preview, setPreview] = React.useState(false);
+  const [availableGenres, setAvailableGenres] = React.useState<Genre[]>([]);
 
   const {
     register,
@@ -94,6 +159,8 @@ export default function EditShortPage({ params }: PageProps) {
 
   // Resolve params and load existing data
   React.useEffect(() => {
+    genreService.getAll().then(setAvailableGenres).catch(console.error);
+
     params.then(({ id }) => {
       const numId = parseInt(id, 10);
       setShortId(numId);
@@ -293,10 +360,17 @@ export default function EditShortPage({ params }: PageProps) {
               <label className="block text-sm font-medium mb-1.5 text-foreground/90">Languages</label>
               <input {...register('languages')} placeholder="Tamil, English" className={inputClass()} />
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-foreground/90">Genre ID</label>
-              <input type="number" {...register('genre_id', { valueAsNumber: true })} className={inputClass()} />
-            </div>
+            <CustomSelect
+              label="Genre"
+              value={String(watch('genre_id') || '')}
+              onChange={(val) => setValue('genre_id', Number(val), { shouldValidate: true })}
+              options={
+                availableGenres.length > 0
+                  ? availableGenres.map(g => ({ label: g.genre_name, value: String(g.genre_id) }))
+                  : [{ label: 'Action', value: '4' }, { label: 'Drama', value: '5' }]
+              }
+              placeholder="Select a genre"
+            />
           </section>
 
           <section className="bg-card border border-border rounded-2xl p-6 space-y-1">
