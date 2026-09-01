@@ -68,7 +68,7 @@ export default function InteractiveEditorPage() {
   const [quickSceneUrl, setQuickSceneUrl] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isSubtitleUploading, setIsSubtitleUploading] = useState(false);
   // Movie Modal state
   const [isMovieModalOpen, setIsMovieModalOpen] = useState(false);
   const [editingMovieObj, setEditingMovieObj] = useState<InteractiveMovie | null>(null);
@@ -1107,18 +1107,60 @@ export default function InteractiveEditorPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-[10px] font-medium mb-1 text-foreground/80 uppercase">Subtitle URL</label>
-                          <input
-                            value={sub.url}
-                            onChange={(e) => {
-                              const newSubs = [...sceneSubtitles];
-                              newSubs[index].url = e.target.value;
-                              setSceneSubtitles(newSubs);
-                            }}
-                            placeholder="https://..."
-                            required
-                            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
-                          />
+                          <label className="block text-[10px] font-medium mb-1 text-foreground/80 uppercase">Subtitle File or URL</label>
+                          <div className="flex gap-2">
+                            <input
+                              value={sub.url}
+                              onChange={(e) => {
+                                const newSubs = [...sceneSubtitles];
+                                newSubs[index].url = e.target.value;
+                                setSceneSubtitles(newSubs);
+                              }}
+                              placeholder="https://..."
+                              required
+                              className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
+                            />
+                            <input
+                              type="file"
+                              accept=".vtt,.srt"
+                              id={`interactive-subtitle-upload-${index}`}
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const formData = new FormData();
+                                formData.append('file', file);
+                                try {
+                                  setIsSubtitleUploading(true);
+                                  const response = await apiClient.post<{ status: boolean; message: string; url: string }>(
+                                    '/upload-subtitle',
+                                    formData,
+                                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                                  );
+                                  if (response.data.status && response.data.url) {
+                                    const newSubs = [...sceneSubtitles];
+                                    newSubs[index].url = response.data.url;
+                                    setSceneSubtitles(newSubs);
+                                  } else {
+                                    alert(response.data.message || 'Failed to upload subtitle.');
+                                  }
+                                } catch (error: any) {
+                                  console.error('Subtitle upload error:', error);
+                                  alert(error.response?.data?.message || 'Failed to upload subtitle.');
+                                } finally {
+                                  setIsSubtitleUploading(false);
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById(`interactive-subtitle-upload-${index}`)?.click()}
+                              className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg transition-colors flex items-center justify-center"
+                              title="Upload Subtitle File"
+                            >
+                              {isSubtitleUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

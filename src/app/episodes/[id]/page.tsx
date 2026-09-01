@@ -489,12 +489,52 @@ export default function EditEpisodePage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1 text-foreground/80">Subtitle URL (.vtt)</label>
-                        <input
-                          {...register(`subtitles.${index}.url`)}
-                          placeholder="https://..."
-                          className="w-full bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
-                        />
+                        <label className="block text-xs font-medium mb-1 text-foreground/80">Subtitle File (.vtt, .srt) or URL</label>
+                        <div className="flex gap-2">
+                          <input
+                            {...register(`subtitles.${index}.url`)}
+                            placeholder="https://..."
+                            className="flex-1 bg-muted/50 border border-border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                          />
+                          <input
+                            type="file"
+                            accept=".vtt,.srt"
+                            id={`ep-subtitle-upload-edit-${index}`}
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              try {
+                                setIsUploading(true);
+                                const response = await apiClient.post<{ status: boolean; message: string; url: string }>(
+                                  '/upload-subtitle',
+                                  formData,
+                                  { headers: { 'Content-Type': 'multipart/form-data' } }
+                                );
+                                if (response.data.status && response.data.url) {
+                                  setValue(`subtitles.${index}.url`, response.data.url, { shouldValidate: true });
+                                } else {
+                                  alert(response.data.message || 'Failed to upload subtitle.');
+                                }
+                              } catch (error: any) {
+                                console.error('Subtitle upload error:', error);
+                                alert(error.response?.data?.message || 'Failed to upload subtitle.');
+                              } finally {
+                                setIsUploading(false);
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`ep-subtitle-upload-edit-${index}`)?.click()}
+                            className="px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg transition-colors flex items-center justify-center"
+                            title="Upload Subtitle File"
+                          >
+                            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          </button>
+                        </div>
                         {errors.subtitles?.[index]?.url && <p className="text-[10px] text-destructive mt-1">{errors.subtitles[index]?.url?.message}</p>}
                       </div>
                     </div>
