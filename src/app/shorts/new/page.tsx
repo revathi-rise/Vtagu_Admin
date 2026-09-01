@@ -265,19 +265,21 @@ export default function NewShortPage() {
 
   const handleThumbnailUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', file, file.name);
     setIsUploading(true);
     try {
-      const res = await apiClient.post<{ status: boolean; url: string }>('/upload-image', formData, {
+      const res = await apiClient.post<{ status: boolean; message?: string; url?: string }>('/upload-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000,
       });
       if (res.data.status && res.data.url) {
         setValue('thumbnail_url', res.data.url, { shouldValidate: true });
+      } else {
+        alert(res.data.message || 'Failed to upload thumbnail.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Upload failed:', err);
-      alert('Failed to upload thumbnail.');
+      alert(err.response?.data?.message || 'Failed to upload thumbnail.');
     } finally {
       setIsUploading(false);
     }
