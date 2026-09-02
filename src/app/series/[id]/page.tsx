@@ -384,10 +384,10 @@ export default function SeriesDetailPage() {
 
                               {/* Badges */}
                               <div className="hidden md:flex items-center gap-2">
-                                {ep.isFeatured ? (
+                                {ep.isFeatured || ep.featured ? (
                                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Featured</span>
                                 ) : null}
-                                {ep.isFree ? (
+                                {ep.isFree ?? ep.is_free ?? ep.free ? (
                                   <span className="flex items-center gap-0.5 text-xs text-emerald-400">
                                     <CheckCircle className="w-3.5 h-3.5" /> Free
                                   </span>

@@ -148,19 +148,19 @@ export default function EditEpisodePage() {
             episode_number: ep.episode_number,
             title: ep.title,
             slug: ep.slug,
-            description_short: ep.shortDescription || '',
-            description_long: ep.longDescription || '',
+            description_short: ep.description_short || ep.shortDescription || '',
+            description_long: ep.description_long || ep.longDescription || '',
             duration: ep.duration || '',
             languages: ep.languages || '',
-            url: ep.media?.video?.url || '',
-            trailer_url: ep.media?.trailer?.url || '',
-            trailer_alt: ep.media?.trailer?.alt || '',
-            poster_image: ep.media?.poster_image?.url || '',
-            card_image: ep.media?.card_image?.url || '',
-            poster_alt: ep.media?.poster_image?.alt || '',
+            url: ep.url || ep.media?.video?.url || '',
+            trailer_url: ep.trailer_url || ep.media?.trailer?.url || '',
+            trailer_alt: ep.trailer_alt || ep.media?.trailer?.alt || '',
+            poster_image: ep.poster_image || ep.media?.poster_image?.url || '',
+            card_image: ep.card_image || ep.media?.card_image?.url || '',
+            poster_alt: ep.poster_alt || ep.media?.poster_image?.alt || '',
             rating: ep.rating || 0,
-            featured: ep.isFeatured || false,
-            free: ep.isFree || false,
+            featured: ep.featured ?? ep.isFeatured ?? false,
+            free: ep.free ?? ep.is_free ?? ep.isFree ?? false,
             is_coming_soon: ep.is_coming_soon || ep.isComingSoon || false,
             subtitles: ep.subtitles || [],
           });
@@ -170,11 +170,13 @@ export default function EditEpisodePage() {
           }
 
           // Force set media values to ensure the custom ImageUploader picks them up
-          if (ep.media?.poster_image?.url) {
-            setValue('poster_image', ep.media.poster_image.url);
+          const poster = ep.poster_image || ep.media?.poster_image?.url;
+          if (poster) {
+            setValue('poster_image', poster);
           }
-          if (ep.media?.card_image?.url) {
-            setValue('card_image', ep.media.card_image.url);
+          const card = ep.card_image || ep.media?.card_image?.url;
+          if (card) {
+            setValue('card_image', card);
           }
         }
       } catch (err) {

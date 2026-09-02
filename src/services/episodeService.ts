@@ -12,15 +12,26 @@ export interface Episode {
   title: string;
   slug: string;
   shortDescription?: string;
+  description_short?: string;
   longDescription?: string;
+  description_long?: string;
   duration?: string;
   languages?: string;
   rating?: number;
   isFeatured?: boolean;
+  featured?: boolean;
   isFree?: boolean;
+  is_free?: boolean;
+  free?: boolean;
   isComingSoon?: boolean;
   is_coming_soon?: boolean;
   viewCount?: number;
+  url?: string;
+  trailer_url?: string;
+  trailer_alt?: string;
+  poster_image?: string;
+  card_image?: string;
+  poster_alt?: string;
   media?: {
     poster_image?: EpisodeMedia;
     card_image?: EpisodeMedia;
