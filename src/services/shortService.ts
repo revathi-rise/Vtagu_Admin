@@ -9,7 +9,7 @@ export interface Short {
   thumbnail_url: string;
   duration: string;
   languages: string;
-  genre_id: number;
+  genre_id: string;
   is_free: boolean;
   is_featured: boolean;
   is_active: boolean;
@@ -27,7 +27,7 @@ export interface ShortPayload {
   thumbnail_url?: string;
   duration?: string;
   languages?: string;
-  genre_id?: number;
+  genre_id?: string;
   is_free?: boolean;
   is_featured?: boolean;
   is_active?: boolean;

@@ -17,7 +17,8 @@ import {
   Eye,
   X,
   Plus,
-  Type
+  Type,
+  CheckCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -48,7 +49,7 @@ const movieSchema = z.object({
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
   actors: z.string().min(1, 'Actors are required'),
-  genre_id: z.number().optional(),
+  genre_id: z.string().optional(),
   country_id: z.number().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
@@ -152,7 +153,7 @@ export default function NewMoviePage() {
       rating: 0,
       director: '',
       actors: '',
-      genre_id: 4,
+      genre_id: '',
       country_id: 1,
       card_image: '',
       subtitles: [],
@@ -180,6 +181,7 @@ export default function NewMoviePage() {
   const [availableLanguages, setAvailableLanguages] = React.useState<Language[]>([]);
   const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>([]);
   const [availableGenres, setAvailableGenres] = React.useState<Genre[]>([]);
+  const [selectedGenres, setSelectedGenres] = React.useState<string[]>([]);
 
   React.useEffect(() => {
     const fetchLanguages = async () => {
@@ -749,26 +751,48 @@ export default function NewMoviePage() {
               {errors.rating && <p className="text-xs text-destructive mt-1.5">{errors.rating.message}</p>}
             </div>
 
-            <CustomSelect
-              label="Genre"
-              value={String(watch('genre_id') || '')}
-              onChange={(value) => {
-                setValue('genre_id', Number(value), { shouldValidate: true });
-              }}
-              options={
-                availableGenres.length > 0
-                  ? availableGenres.map((g) => ({
-                      label: g.genre_name,
-                      value: String(g.genre_id),
-                    }))
-                  : [
-                      { label: 'Action', value: '4' },
-                      { label: 'Drama', value: '5' },
-                      { label: 'Comedy', value: '6' },
-                      { label: 'Sci-Fi', value: '7' }
-                    ]
-              }
-            />
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground/90">Genres</label>
+              {availableGenres.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {availableGenres.map((genre) => {
+                    const isSelected = selectedGenres.includes(String(genre.genre_id));
+                    return (
+                      <button
+                        key={genre.genre_id}
+                        type="button"
+                        onClick={() => {
+                          const updated = isSelected
+                            ? selectedGenres.filter((g) => g !== String(genre.genre_id))
+                            : [...selectedGenres, String(genre.genre_id)];
+                          setSelectedGenres(updated);
+                          setValue('genre_id', updated.join(','), { shouldValidate: true });
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-200",
+                          isSelected 
+                            ? "bg-primary/10 border-primary text-primary shadow-sm" 
+                            : "bg-muted/30 border-border/80 text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-3.5 h-3.5 rounded-sm flex items-center justify-center border transition-colors",
+                          isSelected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30"
+                        )}>
+                          {isSelected && <CheckCircle className="w-2.5 h-2.5" />}
+                        </div>
+                        {genre.genre_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-xl border border-border/50">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading genres...
+                </div>
+              )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium mb-1.5 text-foreground/90">Languages</label>

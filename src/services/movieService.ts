@@ -22,7 +22,7 @@ export interface Movie {
   country_id?: number;
   rating?: number;
   genreId?: number;
-  genre_id?: number;
+  genre_id?: string;
   genre_name?: string;
   ageGroup?: string | null;
   actors?: string;
@@ -69,7 +69,7 @@ export interface MoviePayload {
   release_date?: string;
   duration?: string;
   rating?: number;
-  genre_id?: number;
+  genre_id?: string;
   genre?: string;
   country_id?: number;
   languages?: string;
