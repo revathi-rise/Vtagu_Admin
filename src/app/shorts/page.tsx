@@ -141,18 +141,22 @@ export default function ShortsPage() {
     {
       accessorKey: 'is_free',
       header: 'Access',
-      cell: ({ row }) => (
-        <span
-          className={cn(
-            'text-xs font-bold px-2 py-0.5 rounded',
-            row.original.is_free
-              ? 'text-emerald-400 bg-emerald-400/10'
-              : 'text-violet-400 bg-violet-400/10'
-          )}
-        >
-          {row.original.is_free ? 'Free' : 'Premium'}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const val = row.original.is_free as any;
+        const isFree = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <span
+            className={cn(
+              'text-xs font-bold px-2 py-0.5 rounded',
+              isFree
+                ? 'text-emerald-400 bg-emerald-400/10'
+                : 'text-violet-400 bg-violet-400/10'
+            )}
+          >
+            {isFree ? 'Free' : 'Premium'}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'is_active',

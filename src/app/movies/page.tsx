@@ -100,6 +100,22 @@ export default function MoviesPage() {
       ),
     },
     {
+      accessorKey: 'free',
+      header: 'Type',
+      cell: ({ row }) => {
+        const val = (row.original.free ?? row.original.isFree) as any;
+        const isFree = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <div className={cn(
+            "inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded",
+            isFree ? "text-blue-500 bg-blue-500/10" : "text-purple-500 bg-purple-500/10"
+          )}>
+            {isFree ? 'FREE' : 'PREMIUM'}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span>,

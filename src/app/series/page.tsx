@@ -349,20 +349,26 @@ export default function SeriesPage() {
 
                             {/* Badges */}
                             <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-                              {ep.isFeatured || ep.featured ? (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
-                                  Featured
-                                </span>
-                              ) : null}
-                              {ep.isFree ?? ep.is_free ?? ep.free ? (
-                                <span className="flex items-center gap-0.5 text-xs text-emerald-400 font-medium">
-                                  <CheckCircle className="w-3.5 h-3.5" /> Free
-                                </span>
-                              ) : (
-                                <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                                  <XCircle className="w-3.5 h-3.5" /> Premium
-                                </span>
-                              )}
+                              {(() => {
+                                const featVal = (ep.isFeatured ?? ep.featured) as any;
+                                return (featVal === 1 || featVal === '1' || featVal === true || featVal === 'true') ? (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+                                    Featured
+                                  </span>
+                                ) : null;
+                              })()}
+                              {(() => {
+                                const freeVal = (ep.isFree ?? ep.is_free ?? ep.free) as any;
+                                return (freeVal === 1 || freeVal === '1' || freeVal === true || freeVal === 'true') ? (
+                                  <span className="flex items-center gap-0.5 text-xs text-emerald-400 font-medium">
+                                    <CheckCircle className="w-3.5 h-3.5" /> Free
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                                    <XCircle className="w-3.5 h-3.5" /> Premium
+                                  </span>
+                                );
+                              })()}
                             </div>
 
                             {/* Created date */}

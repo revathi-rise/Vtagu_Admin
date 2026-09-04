@@ -251,10 +251,11 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('movie_image', cleanUrl(data.media?.image?.url || (data as any).movie_image || ''), { shouldValidate: true });
           setValue('card_image', cleanUrl(data.media?.card_image?.url || (data as any).card_image || ''), { shouldValidate: true });
           setValue('duration', data.duration || '', { shouldValidate: true });
-          setValue('featured', !!data.featured || !!data.isFeatured, { shouldValidate: true });
-          setValue('free', !!data.free || !!data.isFree, { shouldValidate: true });
-          setValue('is_interactive', !!data.is_interactive || !!data.isInteractive, { shouldValidate: true });
-          setValue('is_coming_soon', !!data.is_coming_soon || !!data.isComingSoon, { shouldValidate: true });
+          const parseBool = (val: any) => val === 1 || val === '1' || val === true || val === 'true';
+          setValue('featured', parseBool(data.featured) || parseBool(data.isFeatured), { shouldValidate: true });
+          setValue('free', parseBool(data.free) || parseBool(data.isFree), { shouldValidate: true });
+          setValue('is_interactive', parseBool(data.is_interactive) || parseBool(data.isInteractive), { shouldValidate: true });
+          setValue('is_coming_soon', parseBool(data.is_coming_soon) || parseBool(data.isComingSoon), { shouldValidate: true });
           setValue('languages', data.languages || '', { shouldValidate: true });
           if (data.languages) {
              setSelectedLanguages(data.languages.split(',').map((s: string) => s.trim()));

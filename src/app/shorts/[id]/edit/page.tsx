@@ -170,20 +170,25 @@ export default function EditShortPage({ params }: PageProps) {
       setShortId(numId);
       shortService.getById(numId)
         .then((data) => {
-          reset({
-            title: data.title || '',
-            slug: data.slug || '',
-            description: data.description || '',
-            video_url: data.video_url || '',
-            thumbnail_url: data.thumbnail_url || '',
-            duration: data.duration || '',
-            languages: data.languages || '',
-            genre_id: data.genre_id || undefined,
-            is_free: data.is_free ?? true,
-            is_featured: data.is_featured ?? false,
-            is_active: data.is_active ?? true,
-            sort_order: data.sort_order ?? 0,
-          });
+            const parseBool = (val: any, defaultVal: boolean) => {
+              if (val === undefined || val === null) return defaultVal;
+              return val === 1 || val === '1' || val === true || val === 'true';
+            };
+            
+            reset({
+              title: data.title || '',
+              slug: data.slug || '',
+              description: data.description || '',
+              video_url: data.video_url || '',
+              thumbnail_url: data.thumbnail_url || '',
+              duration: data.duration || '',
+              languages: data.languages || '',
+              genre_id: data.genre_id || undefined,
+              is_free: parseBool(data.is_free, true),
+              is_featured: parseBool(data.is_featured, false),
+              is_active: parseBool(data.is_active, true),
+              sort_order: data.sort_order ?? 0,
+            });
           if (data.genre_id) {
             setSelectedGenres(String(data.genre_id).split(',').map((s: string) => s.trim()));
           }
