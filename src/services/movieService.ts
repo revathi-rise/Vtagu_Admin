@@ -78,7 +78,9 @@ export interface MoviePayload {
   director?: string;
   director_name?: string;
   featured?: boolean;
+  isFeatured?: boolean;
   free?: boolean;
+  isFree?: boolean;
   age_restriction?: string;
   kids_restriction?: boolean;
   is_interactive?: boolean;

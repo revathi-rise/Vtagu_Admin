@@ -342,8 +342,8 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         actors: data.actors,
         director: data.director,
         languages: data.languages || '',
-        featured: data.featured,
-        free: data.free,
+        isFeatured: data.featured,
+        isFree: data.free,
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
         media: {

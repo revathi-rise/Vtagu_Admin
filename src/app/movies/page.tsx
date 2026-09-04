@@ -103,7 +103,7 @@ export default function MoviesPage() {
       accessorKey: 'free',
       header: 'Type',
       cell: ({ row }) => {
-        const val = (row.original.free ?? row.original.isFree) as any;
+        const val = (row.original.isFree ?? row.original.free ?? (row.original as any).is_free) as any;
         const isFree = val === 1 || val === '1' || val === true || val === 'true';
         return (
           <div className={cn(
