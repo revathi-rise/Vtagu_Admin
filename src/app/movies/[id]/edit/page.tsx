@@ -397,11 +397,6 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           video: data.url ? { url: data.url, alt: `${data.title} Video` } : undefined,
           trailer: data.trailer_url ? { url: data.trailer_url, alt: `${data.title} Trailer` } : undefined,
         },
-        url: data.url,
-        video_url: data.url,
-        videoUrl: data.url,
-        trailer_url: data.trailer_url,
-        trailerUrl: data.trailer_url,
         subtitles: data.subtitles,
         audio_tracks: data.audio_tracks
       };
