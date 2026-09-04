@@ -200,11 +200,24 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
   // Helper to fix malformed URLs from backend (e.g., duplicated https://...https://...)
   const cleanUrl = (val: any): string => {
     if (!val || typeof val !== 'string') return '';
-    const secondHttpIndex = val.indexOf('http', 1);
+    const trimmed = val.trim();
+    const secondHttpIndex = trimmed.indexOf('http', 1);
     if (secondHttpIndex > 0) {
-      return val.substring(0, secondHttpIndex);
+      return trimmed.substring(0, secondHttpIndex);
     }
-    return val;
+    return trimmed;
+  };
+
+  const extractUrl = (val: any): string => {
+    if (!val) return '';
+    if (typeof val === 'string') return cleanUrl(val);
+    if (typeof val === 'object' && val !== null) {
+      if (typeof val.url === 'string') return cleanUrl(val.url);
+      if (typeof val.src === 'string') return cleanUrl(val.src);
+      if (typeof val.link === 'string') return cleanUrl(val.link);
+      if (typeof val.path === 'string') return cleanUrl(val.path);
+    }
+    return '';
   };
 
   React.useEffect(() => {
@@ -246,10 +259,42 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('description_long', data.description_long || data.longDescription || '', { shouldValidate: true });
           setValue('year', data.year || data.releaseYear || new Date().getFullYear(), { shouldValidate: true });
           setValue('rating', data.rating || 0, { shouldValidate: true });
-          setValue('url', cleanUrl(data.media?.video?.url || (data as any).url || ''), { shouldValidate: true });
-          setValue('trailer_url', cleanUrl(data.media?.trailer?.url || (data as any).trailer_url || ''), { shouldValidate: true });
-          setValue('movie_image', cleanUrl(data.media?.image?.url || (data as any).movie_image || ''), { shouldValidate: true });
-          setValue('card_image', cleanUrl(data.media?.card_image?.url || (data as any).card_image || ''), { shouldValidate: true });
+          const videoUrlCandidate =
+            extractUrl(data.media?.video) ||
+            extractUrl((data as any).url) ||
+            extractUrl((data as any).video_url) ||
+            extractUrl((data as any).videoUrl) ||
+            extractUrl((data as any).video) ||
+            extractUrl((data as any).movie_video) ||
+            extractUrl((data as any).movie_video_url) ||
+            extractUrl((data as any).movie_url);
+          setValue('url', videoUrlCandidate, { shouldValidate: true });
+
+          const trailerUrlCandidate =
+            extractUrl(data.media?.trailer) ||
+            extractUrl((data as any).trailer_url) ||
+            extractUrl((data as any).trailerUrl) ||
+            extractUrl((data as any).trailer_video_url) ||
+            extractUrl((data as any).trailer);
+          setValue('trailer_url', trailerUrlCandidate, { shouldValidate: true });
+
+          const movieImageCandidate =
+            extractUrl(data.media?.image) ||
+            extractUrl((data as any).movie_image) ||
+            extractUrl((data as any).posterImage) ||
+            extractUrl((data as any).poster_image) ||
+            extractUrl((data as any).banner_image) ||
+            extractUrl((data as any).image);
+          setValue('movie_image', movieImageCandidate, { shouldValidate: true });
+
+          const cardImageCandidate =
+            extractUrl(data.media?.card_image) ||
+            extractUrl((data as any).card_image) ||
+            extractUrl((data as any).cardImage) ||
+            extractUrl((data as any).card_image_url) ||
+            extractUrl((data as any).thumbnail) ||
+            extractUrl((data as any).thumbnail_url);
+          setValue('card_image', cardImageCandidate, { shouldValidate: true });
           setValue('duration', data.duration || '', { shouldValidate: true });
           const parseBool = (val: any) => val === 1 || val === '1' || val === true || val === 'true';
           setValue('featured', parseBool(data.featured) || parseBool(data.isFeatured), { shouldValidate: true });
@@ -352,6 +397,11 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           video: data.url ? { url: data.url, alt: `${data.title} Video` } : undefined,
           trailer: data.trailer_url ? { url: data.trailer_url, alt: `${data.title} Trailer` } : undefined,
         },
+        url: data.url,
+        video_url: data.url,
+        videoUrl: data.url,
+        trailer_url: data.trailer_url,
+        trailerUrl: data.trailer_url,
         subtitles: data.subtitles,
         audio_tracks: data.audio_tracks
       };

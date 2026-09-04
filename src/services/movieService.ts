@@ -91,6 +91,11 @@ export interface MoviePayload {
     video?: { url: string; alt?: string };
     trailer?: { url: string; alt?: string };
   };
+  url?: string;
+  video_url?: string;
+  videoUrl?: string;
+  trailer_url?: string;
+  trailerUrl?: string;
   subtitles?: { language: string; label: string; url: string }[];
   audio_tracks?: { language: string; label: string; url: string; isDefault?: boolean }[];
 }
