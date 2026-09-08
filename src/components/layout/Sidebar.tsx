@@ -41,6 +41,7 @@ const menuItems = [
   { icon: GitBranch, label: 'Interactive', href: '/interactive' },
   { icon: CreditCard, label: 'Subscriptions', href: '/subscriptions?tab=plans' },
   { icon: Receipt, label: 'Transactions', href: '/transactions' },
+  { icon: Coins, label: 'SVOD Revenue', href: '/svod-revenue' },
   { icon: Smartphone, label: 'Devices', href: '/devices' },
   { icon: Bell, label: 'News Popup', href: '/news' },
   { icon: HelpCircle, label: 'FAQ', href: '/faq' },

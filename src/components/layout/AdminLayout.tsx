@@ -24,6 +24,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     '/interactive': 'Interactive',
     '/subscriptions': 'Subscriptions',
     '/transactions': 'Transactions',
+    '/svod-revenue': 'SVOD Revenue',
     '/devices': 'Devices',
     '/news': 'News Popup',
   };
