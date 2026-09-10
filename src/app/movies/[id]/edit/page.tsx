@@ -394,7 +394,9 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         isFree: data.free,
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
-        is_revenue_managed: data.is_revenue_managed,
+        url: data.url,
+        video_url: data.url,
+        trailer_url: data.trailer_url,
         media: {
           image: data.movie_image ? { url: data.movie_image, alt: `${data.title} Poster` } : undefined,
           card_image: data.card_image ? { url: data.card_image, alt: `${data.title} Card` } : undefined,

@@ -10,6 +10,13 @@ export interface Movie {
   title: string;
   movie_name: string;
   slug: string;
+  url?: string;
+  video_url?: string;
+  videoUrl?: string;
+  trailer_url?: string;
+  trailerUrl?: string;
+  movie_image?: string;
+  card_image?: string;
   shortDescription?: string;
   movie_desc?: string;
   description_short?: string;
@@ -64,6 +71,9 @@ export interface MoviePayload {
   title: string;
   movie_name?: string;
   slug?: string;
+  url?: string;
+  video_url?: string;
+  trailer_url?: string;
   description_short?: string;
   description_long?: string;
   movie_desc?: string;

@@ -13,7 +13,9 @@ import {
   Film,
   AlertTriangle,
   X,
-  Loader2
+  Loader2,
+  Video,
+  ExternalLink
 } from 'lucide-react';
 import { DataTable } from '@/components/ui/DataTable';
 import { movieService, Movie } from '@/services/movieService';
@@ -130,6 +132,57 @@ export default function MoviesPage() {
           </div>
         );
       }
+    },
+    {
+      accessorKey: 'url',
+      header: 'Media URLs',
+      cell: ({ row }) => {
+        const videoUrl =
+          row.original.url ||
+          (row.original as any).video_url ||
+          (row.original as any).videoUrl ||
+          row.original.media?.video?.url;
+        const trailerUrl =
+          row.original.trailer_url ||
+          (row.original as any).trailerUrl ||
+          row.original.media?.trailer?.url;
+
+        return (
+          <div className="flex flex-col gap-1 text-xs max-w-[180px]">
+            {videoUrl ? (
+              <a
+                href={videoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 font-mono truncate"
+                title={`Video: ${videoUrl}`}
+              >
+                <Video className="w-3.5 h-3.5 shrink-0 text-blue-400" />
+                <span className="truncate">{videoUrl}</span>
+                <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
+              </a>
+            ) : (
+              <span className="text-muted-foreground/60 italic flex items-center gap-1 text-[11px]">
+                <Video className="w-3 h-3 shrink-0 opacity-40" />
+                No Video URL
+              </span>
+            )}
+            {trailerUrl ? (
+              <a
+                href={trailerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-mono truncate"
+                title={`Trailer: ${trailerUrl}`}
+              >
+                <Film className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                <span className="truncate">{trailerUrl}</span>
+                <ExternalLink className="w-3 h-3 shrink-0 opacity-70" />
+              </a>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'createdAt',
