@@ -272,6 +272,8 @@ export default function NewMoviePage() {
         isFree: data.free,
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
+        is_revenue_managed: data.is_revenue_managed,
+        isRevenueManaged: data.is_revenue_managed,
         url: data.url,
         video_url: data.url,
         trailer_url: data.trailer_url,
