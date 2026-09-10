@@ -93,7 +93,7 @@ export default function DevicesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDevices.length > 0 ? (
             filteredDevices.map(device => {
-              const isActive = device.is_active === true || device.is_active === 1 || device.is_active === '1';
+              const isActive = device.is_active === true || (device.is_active as any) === 1 || (device.is_active as any) === '1';
               const deviceName = device.device_name || device.device_id || 'Unnamed Device';
               const userId = device.userId || device.user_id || 'N/A';
               const deviceType = (device.device_type || '').toLowerCase();

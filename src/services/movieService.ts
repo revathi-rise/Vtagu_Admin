@@ -44,6 +44,8 @@ export interface Movie {
   is_interactive?: boolean;
   isComingSoon?: boolean;
   is_coming_soon?: boolean;
+  isRevenueManaged?: boolean;
+  is_revenue_managed?: boolean;
   interactiveMap?: unknown;
   media?: {
     image?: MovieMedia;
@@ -85,6 +87,8 @@ export interface MoviePayload {
   kids_restriction?: boolean;
   is_interactive?: boolean;
   is_coming_soon?: boolean;
+  is_revenue_managed?: boolean;
+  isRevenueManaged?: boolean;
   media?: {
     image?: { url: string; alt?: string };
     card_image?: { url: string; alt?: string };

@@ -47,6 +47,7 @@ const movieSchema = z.object({
   free: z.boolean(),
   is_interactive: z.boolean(),
   is_coming_soon: z.boolean().optional(),
+  is_revenue_managed: z.boolean().optional(),
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
   actors: z.string().min(1, 'Actors are required'),
@@ -157,6 +158,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
       featured: false,
       free: false,
       is_interactive: false,
+      is_revenue_managed: false,
       year: new Date().getFullYear(),
       languages: '',
       rating: 0,
@@ -301,6 +303,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('free', parseBool(data.free) || parseBool(data.isFree), { shouldValidate: true });
           setValue('is_interactive', parseBool(data.is_interactive) || parseBool(data.isInteractive), { shouldValidate: true });
           setValue('is_coming_soon', parseBool(data.is_coming_soon) || parseBool(data.isComingSoon), { shouldValidate: true });
+          setValue('is_revenue_managed', parseBool(data.is_revenue_managed) || parseBool(data.isRevenueManaged), { shouldValidate: true });
           setValue('languages', data.languages || '', { shouldValidate: true });
           if (data.languages) {
              setSelectedLanguages(data.languages.split(',').map((s: string) => s.trim()));
@@ -391,6 +394,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         isFree: data.free,
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
+        is_revenue_managed: data.is_revenue_managed,
         media: {
           image: data.movie_image ? { url: data.movie_image, alt: `${data.title} Poster` } : undefined,
           card_image: data.card_image ? { url: data.card_image, alt: `${data.title} Card` } : undefined,
@@ -1066,6 +1070,16 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Coming Soon</label>
               <input type="checkbox" {...register('is_coming_soon')} className="w-5 h-5 rounded border-border" />
+            </div>
+            <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-emerald-400">Revenue Managed (Pro-Rata)</label>
+                <input type="checkbox" {...register('is_revenue_managed')} className="w-5 h-5 rounded border-border accent-emerald-500" />
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-foreground/80 font-medium">☑ Checked:</span> Title is included in SVOD Pro-Rata monthly revenue payouts.<br/>
+                <span className="text-foreground/80 font-medium">☐ Unchecked:</span> Title is internal/exempt from monthly revenue payouts.
+              </p>
             </div>
           </section>
 

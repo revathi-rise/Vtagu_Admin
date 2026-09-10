@@ -116,6 +116,22 @@ export default function MoviesPage() {
       }
     },
     {
+      accessorKey: 'is_revenue_managed',
+      header: 'Revenue Engine',
+      cell: ({ row }) => {
+        const val = (row.original.isRevenueManaged ?? row.original.is_revenue_managed ?? (row.original as any).is_revenue_shared) as any;
+        const isManaged = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <div className={cn(
+            "inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded",
+            isManaged ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20" : "text-muted-foreground bg-muted"
+          )}>
+            {isManaged ? 'PRO-RATA' : 'EXEMPT'}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => <span className="text-muted-foreground">{formatDate(row.original.createdAt)}</span>,
