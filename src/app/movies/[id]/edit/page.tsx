@@ -48,6 +48,7 @@ const movieSchema = z.object({
   is_interactive: z.boolean(),
   is_coming_soon: z.boolean().optional(),
   is_revenue_managed: z.boolean().optional(),
+  movie_type: z.string().optional(),
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
   actors: z.string().min(1, 'Actors are required'),
@@ -159,6 +160,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
       free: false,
       is_interactive: false,
       is_revenue_managed: false,
+      movie_type: '1',
       year: new Date().getFullYear(),
       languages: '',
       rating: 0,
@@ -304,6 +306,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('is_interactive', parseBool(data.is_interactive) || parseBool(data.isInteractive), { shouldValidate: true });
           setValue('is_coming_soon', parseBool(data.is_coming_soon) || parseBool(data.isComingSoon), { shouldValidate: true });
           setValue('is_revenue_managed', parseBool(data.is_revenue_managed) || parseBool(data.isRevenueManaged), { shouldValidate: true });
+          setValue('movie_type', String(data.movieType || data.contentType || '1'), { shouldValidate: true });
           setValue('languages', data.languages || '', { shouldValidate: true });
           if (data.languages) {
              setSelectedLanguages(data.languages.split(',').map((s: string) => s.trim()));
@@ -396,6 +399,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         is_coming_soon: data.is_coming_soon,
         is_revenue_managed: data.is_revenue_managed,
         isRevenueManaged: data.is_revenue_managed,
+        movie_type: data.movie_type,
         url: data.url,
         video_url: data.url,
         trailer_url: data.trailer_url,
@@ -1051,8 +1055,20 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
             </div>
           </section>
 
-          {/* Toggles */}
+          {/* Toggles & Options */}
           <section className="bg-card border border-border rounded-2xl p-6 space-y-4">
+            <div className="flex flex-col gap-2 border-b border-border/50 pb-4 mb-4">
+              <label className="text-sm font-medium">Movie Type / Tier</label>
+              <select
+                {...register('movie_type')}
+                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+              >
+                <option value="1">1 - Normal (Default Paid)</option>
+                <option value="2">2 - Premium (Prime Content)</option>
+              </select>
+              <p className="text-xs text-muted-foreground">Sets the badge and access tier in the app (e.g. PREMIUM).</p>
+            </div>
+            
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Featured Movie</label>
               <input type="checkbox" {...register('featured')} className="w-5 h-5 rounded border-border" />

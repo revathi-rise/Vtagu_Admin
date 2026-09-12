@@ -98,6 +98,7 @@ export interface MoviePayload {
   is_interactive?: boolean;
   is_coming_soon?: boolean;
   is_revenue_managed?: boolean;
+  movie_type?: string;
   isRevenueManaged?: boolean;
   media?: {
     image?: { url: string; alt?: string };
