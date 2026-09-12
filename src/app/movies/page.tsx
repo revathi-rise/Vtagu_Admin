@@ -72,11 +72,47 @@ export default function MoviesPage() {
     {
       accessorKey: 'genre_name',
       header: 'Genre',
-      cell: ({ row }) => (
-        <span className="capitalize text-xs font-medium px-2 py-1 bg-muted rounded-full">
-          {row.original.genre_name || 'N/A'}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const genreStr = row.original.genre_name || (row.original as any).genre || '';
+        const genres = typeof genreStr === 'string' ? genreStr.split(',').map(g => g.trim()).filter(Boolean) : [];
+        
+        if (genres.length === 0) {
+          return (
+            <span className="text-xs font-medium px-2 py-1 bg-muted/50 text-muted-foreground rounded-full border border-border/50">
+              N/A
+            </span>
+          );
+        }
+
+        const firstGenre = genres[0];
+        const remaining = genres.length - 1;
+
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap group relative">
+            <span className="capitalize text-[11px] font-semibold px-2 py-0.5 bg-primary/10 text-primary rounded-full border border-primary/20">
+              {firstGenre}
+            </span>
+            {remaining > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-muted rounded-full text-muted-foreground cursor-help">
+                +{remaining}
+              </span>
+            )}
+            
+            {/* Tooltip */}
+            {genres.length > 1 && (
+              <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 animate-in fade-in slide-in-from-bottom-1 duration-200 pointer-events-none">
+                <div className="bg-card text-card-foreground text-[11px] p-2 rounded-xl shadow-xl border border-border flex flex-wrap gap-1.5 min-w-[120px] max-w-[200px]">
+                  {genres.map((g, i) => (
+                    <span key={i} className="px-2 py-1 bg-muted/80 rounded-md whitespace-nowrap capitalize font-medium">
+                      {g}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'viewCount',
