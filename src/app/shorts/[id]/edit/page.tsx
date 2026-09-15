@@ -35,6 +35,10 @@ const shortSchema = z.object({
   languages: z.string().optional(),
   genre_id: z.string().optional(),
   is_free: z.boolean(),
+  price: z.number().optional(),
+  currency: z.string().optional(),
+  is_revenue_managed: z.boolean().optional(),
+  revenue_share_percent: z.number().optional(),
   is_featured: z.boolean(),
   is_active: z.boolean(),
   sort_order: z.number().min(0),
@@ -142,6 +146,12 @@ export default function EditShortPage({ params }: PageProps) {
   const [preview, setPreview] = React.useState(false);
   const [availableGenres, setAvailableGenres] = React.useState<Genre[]>([]);
 
+  const availableCurrencies = [
+    { label: 'INR (₹)', value: 'INR' },
+    { label: 'USD ($)', value: 'USD' },
+    { label: 'EUR (€)', value: 'EUR' },
+  ];
+
   const {
     register,
     handleSubmit,
@@ -153,6 +163,9 @@ export default function EditShortPage({ params }: PageProps) {
     resolver: zodResolver(shortSchema),
     defaultValues: {
       is_free: true,
+      price: 0,
+      currency: 'INR',
+      is_revenue_managed: false,
       is_featured: false,
       is_active: true,
       sort_order: 0,
@@ -185,9 +198,13 @@ export default function EditShortPage({ params }: PageProps) {
               languages: data.languages || '',
               genre_id: data.genre_id || undefined,
               is_free: parseBool(data.is_free, true),
+              price: data.price ? Number(data.price) : 0,
+              currency: data.currency || 'INR',
+              is_revenue_managed: parseBool(data.is_revenue_managed, false),
+              revenue_share_percent: data.revenue_share_percent ? Number(data.revenue_share_percent) : undefined,
               is_featured: parseBool(data.is_featured, false),
               is_active: parseBool(data.is_active, true),
-              sort_order: data.sort_order ?? 0,
+              sort_order: Number(data.sort_order) || 0,
             });
           if (data.genre_id) {
             setSelectedGenres(String(data.genre_id).split(',').map((s: string) => s.trim()));
@@ -235,6 +252,11 @@ export default function EditShortPage({ params }: PageProps) {
         languages: data.languages,
         genre_id: data.genre_id,
         is_free: data.is_free,
+        price: data.is_free ? 0 : data.price,
+        currency: data.is_free ? 'INR' : data.currency,
+        is_revenue_managed: data.is_revenue_managed,
+        is_svod_eligible: data.is_revenue_managed ? 1 : 0,
+        revenue_share_percent: data.is_revenue_managed ? data.revenue_share_percent : undefined,
         is_featured: data.is_featured,
         is_active: data.is_active,
         sort_order: data.sort_order,
@@ -252,6 +274,8 @@ export default function EditShortPage({ params }: PageProps) {
       hasError && 'border-destructive ring-destructive/20'
     );
 
+  const isFree = watch('is_free');
+  const isRevenueManaged = watch('is_revenue_managed');
   const thumbnailUrl = watch('thumbnail_url') || '';
 
   if (loadError) {
@@ -427,10 +451,68 @@ export default function EditShortPage({ params }: PageProps) {
           </section>
 
           <section className="bg-card border border-border rounded-2xl p-6 space-y-1">
-            <h3 className="text-lg font-semibold border-b border-border pb-2 mb-3">Visibility</h3>
-            <Toggle label="Free Access" description="Visible without subscription" checked={watch('is_free')} onChange={(v) => setValue('is_free', v)} />
-            <Toggle label="Featured" description="Highlight in featured sections" checked={watch('is_featured')} onChange={(v) => setValue('is_featured', v)} />
-            <Toggle label="Active / Live" description="Show on public Shorts feed" checked={watch('is_active')} onChange={(v) => setValue('is_active', v)} />
+            <h3 className="text-lg font-semibold border-b border-border pb-2 mb-3">Visibility & Access</h3>
+            <Toggle
+              label="Free Access"
+              description="Visible to all users without subscription"
+              checked={watch('is_free')}
+              onChange={(v) => setValue('is_free', v)}
+            />
+
+            {!isFree && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-1 duration-150 p-3 bg-muted/20 border border-border/50 rounded-xl mt-2 mb-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-muted-foreground">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...register('price', { valueAsNumber: true })}
+                    placeholder="e.g. 99"
+                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-primary/20 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-muted-foreground">Currency</label>
+                  <CustomSelect
+                    label=""
+                    value={watch('currency') || 'INR'}
+                    onChange={(v) => setValue('currency', v)}
+                    options={availableCurrencies}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 pt-4 border-t border-border/40">
+              <Toggle
+                label="SVOD Pro-Rata"
+                description="Enable watch-time revenue tracking"
+                checked={!!watch('is_revenue_managed')}
+                onChange={(v) => setValue('is_revenue_managed', v)}
+              />
+              
+              {isRevenueManaged && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl mt-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <label className="block text-xs font-semibold mb-1 text-emerald-400">Revenue Share (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    {...register('revenue_share_percent', { valueAsNumber: true })}
+                    placeholder="e.g. 50"
+                    className="w-full bg-background border border-emerald-500/30 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 ring-emerald-500/20 text-white font-mono placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-border/40">
+              <Toggle label="Featured" description="Highlight in featured sections" checked={watch('is_featured')} onChange={(v) => setValue('is_featured', v)} />
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/40">
+              <Toggle label="Active / Live" description="Show on public Shorts feed" checked={watch('is_active')} onChange={(v) => setValue('is_active', v)} />
+            </div>
           </section>
         </div>
       </div>

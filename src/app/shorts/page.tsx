@@ -125,16 +125,23 @@ export default function ShortsPage() {
       accessorKey: 'is_featured',
       header: 'Featured',
       cell: ({ row }) => (
-        <div
-          className={cn(
-            'inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded',
-            row.original.is_featured
-              ? 'text-amber-500 bg-amber-500/10'
-              : 'text-muted-foreground bg-muted'
+        <div className="flex flex-col gap-1.5 items-start">
+          <div
+            className={cn(
+              'inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded',
+              row.original.is_featured
+                ? 'text-amber-500 bg-amber-500/10'
+                : 'text-muted-foreground bg-muted'
+            )}
+          >
+            <Star className={cn('w-3 h-3', row.original.is_featured && 'fill-current')} />
+            {row.original.is_featured ? 'YES' : 'NO'}
+          </div>
+          {!!row.original.is_revenue_managed && (
+            <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20">
+              SVOD PRO-RATA
+            </div>
           )}
-        >
-          <Star className={cn('w-3 h-3', row.original.is_featured && 'fill-current')} />
-          {row.original.is_featured ? 'YES' : 'NO'}
         </div>
       ),
     },

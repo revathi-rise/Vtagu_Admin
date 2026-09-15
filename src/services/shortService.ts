@@ -17,6 +17,12 @@ export interface Short {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  price?: number;
+  currency?: string;
+  is_revenue_managed?: number | boolean;
+  isRevenueManaged?: number | boolean;
+  is_svod_eligible?: number;
+  revenue_share_percent?: number;
 }
 
 export interface ShortPayload {
@@ -32,6 +38,12 @@ export interface ShortPayload {
   is_featured?: boolean;
   is_active?: boolean;
   sort_order?: number;
+  price?: number;
+  currency?: string;
+  is_revenue_managed?: number | boolean;
+  isRevenueManaged?: number | boolean;
+  is_svod_eligible?: number;
+  revenue_share_percent?: number;
 }
 
 export const shortService = {
