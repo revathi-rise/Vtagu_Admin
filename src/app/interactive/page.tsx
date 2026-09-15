@@ -83,6 +83,8 @@ export default function InteractiveEditorPage() {
   const [moviePrice, setMoviePrice] = useState<string>('0.00');
   const [movieCurrency, setMovieCurrency] = useState<string>('INR');
   const [availableCurrencies, setAvailableCurrencies] = useState<Currency[]>([]);
+  const [isRevenueManaged, setIsRevenueManaged] = useState(false);
+  const [revenueSharePercent, setRevenueSharePercent] = useState<string>('');
 
   // Image Upload / Cropping state for Movie Modal
   const [isMovieUploading, setIsMovieUploading] = useState(false);
@@ -213,6 +215,8 @@ export default function InteractiveEditorPage() {
     setMovieIsFree(true);
     setMoviePrice('0.00');
     setMovieCurrency('INR');
+    setIsRevenueManaged(false);
+    setRevenueSharePercent('');
     setIsMovieModalOpen(true);
   };
 
@@ -229,6 +233,9 @@ export default function InteractiveEditorPage() {
     setMovieIsFree(movie.is_free !== 0);
     setMoviePrice(movie.price !== undefined ? movie.price.toString() : '0.00');
     setMovieCurrency(movie.currency || 'INR');
+    const revManaged = (movie.isRevenueManaged ?? movie.is_revenue_managed) as any;
+    setIsRevenueManaged(revManaged === true || revManaged === 1 || revManaged === '1' || revManaged === 'true');
+    setRevenueSharePercent(movie.revenue_share_percent ? movie.revenue_share_percent.toString() : '');
     setIsMovieModalOpen(true);
   };
 
@@ -248,6 +255,10 @@ export default function InteractiveEditorPage() {
         is_free: movieIsFree ? 1 : 0,
         price: movieIsFree ? 0 : Number(moviePrice) || 0,
         currency: movieCurrency,
+        is_revenue_managed: isRevenueManaged ? 1 : 0,
+        isRevenueManaged: isRevenueManaged,
+        is_svod_eligible: isRevenueManaged ? 1 : 0,
+        revenue_share_percent: isRevenueManaged && revenueSharePercent ? Number(revenueSharePercent) : undefined,
       };
 
       if (editingMovieObj) {
@@ -740,14 +751,21 @@ export default function InteractiveEditorPage() {
                     if (!activeMovie) return null;
                     const isFree = activeMovie.is_free !== 0;
                     return (
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border",
-                        isFree 
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                          : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                      )}>
-                        {isFree ? "Free" : `Paid (${activeMovie.currency || 'INR'} ${activeMovie.price || 0})`}
-                      </span>
+                      <>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border",
+                          isFree 
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        )}>
+                          {isFree ? "Free" : `Paid (${activeMovie.currency || 'INR'} ${activeMovie.price || 0})`}
+                        </span>
+                        {activeMovie.is_revenue_managed ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            SVOD PRO-RATA
+                          </span>
+                        ) : null}
+                      </>
                     );
                   })()}
                 </span>
@@ -1506,6 +1524,38 @@ export default function InteractiveEditorPage() {
                           )}
                         </select>
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* SVOD Pro-Rata Tracker Properties */}
+                <div className="border-t border-border/40 pt-4 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="interactiveSvodToggle"
+                      checked={isRevenueManaged}
+                      onChange={(e) => setIsRevenueManaged(e.target.checked)}
+                      className="rounded border-border text-emerald-500 focus:ring-emerald-500/20 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <label htmlFor="interactiveSvodToggle" className="text-sm font-semibold text-emerald-400 cursor-pointer select-none">
+                      Enable SVOD Pro-Rata (Watch-Time Revenue)
+                    </label>
+                  </div>
+                  {isRevenueManaged && (
+                    <div className="pl-6 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <label className="text-xs font-semibold text-muted-foreground">Revenue Share (%)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        value={revenueSharePercent}
+                        onChange={(e) => setRevenueSharePercent(e.target.value)}
+                        placeholder="e.g. 50"
+                        className="w-full bg-background border border-emerald-500/30 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-emerald-500/20 transition-all text-white font-mono placeholder:text-muted-foreground/50"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Percentage of calculated watch-time revenue allocated to this interactive movie.</p>
                     </div>
                   )}
                 </div>

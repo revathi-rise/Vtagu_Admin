@@ -12,6 +12,10 @@ export interface InteractiveMovie {
   is_free?: number;
   price?: number;
   currency?: string;
+  is_revenue_managed?: number | boolean;
+  isRevenueManaged?: number | boolean;
+  is_svod_eligible?: number;
+  revenue_share_percent?: number;
 }
 
 export const interactiveMovieService = {
