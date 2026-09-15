@@ -276,6 +276,8 @@ export default function NewMoviePage() {
         is_coming_soon: data.is_coming_soon,
         is_revenue_managed: data.is_revenue_managed,
         isRevenueManaged: data.is_revenue_managed,
+        is_revenue_shared: data.is_revenue_managed,
+        isRevenueShared: data.is_revenue_managed,
         movie_type: data.movie_type,
         url: data.url,
         video_url: data.url,

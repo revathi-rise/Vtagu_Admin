@@ -100,6 +100,8 @@ export interface MoviePayload {
   is_revenue_managed?: boolean;
   movie_type?: string;
   isRevenueManaged?: boolean;
+  is_revenue_shared?: boolean;
+  isRevenueShared?: boolean;
   media?: {
     image?: { url: string; alt?: string };
     card_image?: { url: string; alt?: string };

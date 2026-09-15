@@ -305,7 +305,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('free', parseBool(data.free) || parseBool(data.isFree), { shouldValidate: true });
           setValue('is_interactive', parseBool(data.is_interactive) || parseBool(data.isInteractive), { shouldValidate: true });
           setValue('is_coming_soon', parseBool(data.is_coming_soon) || parseBool(data.isComingSoon), { shouldValidate: true });
-          setValue('is_revenue_managed', parseBool(data.is_revenue_managed) || parseBool(data.isRevenueManaged), { shouldValidate: true });
+          setValue('is_revenue_managed', parseBool(data.is_revenue_managed) || parseBool(data.isRevenueManaged) || parseBool((data as any).is_revenue_shared) || parseBool((data as any).isRevenueShared), { shouldValidate: true });
           setValue('movie_type', String(data.movieType || data.contentType || '1'), { shouldValidate: true });
           setValue('languages', data.languages || '', { shouldValidate: true });
           if (data.languages) {
@@ -399,6 +399,8 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         is_coming_soon: data.is_coming_soon,
         is_revenue_managed: data.is_revenue_managed,
         isRevenueManaged: data.is_revenue_managed,
+        is_revenue_shared: data.is_revenue_managed,
+        isRevenueShared: data.is_revenue_managed,
         movie_type: data.movie_type,
         url: data.url,
         video_url: data.url,
