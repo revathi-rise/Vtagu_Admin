@@ -585,6 +585,7 @@ export default function NewShortPage() {
               checked={watch('is_active')}
               onChange={(v) => setValue('is_active', v)}
             />
+            </div>
           </section>
         </div>
       </div>
