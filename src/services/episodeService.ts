@@ -25,6 +25,12 @@ export interface Episode {
   free?: boolean;
   isComingSoon?: boolean;
   is_coming_soon?: boolean;
+  is_revenue_managed?: boolean;
+  isRevenueManaged?: boolean;
+  is_svod_eligible?: boolean;
+  revenue_share_percent?: number;
+  price?: number;
+  currency?: string;
   viewCount?: number;
   url?: string;
   trailer_url?: string;
@@ -63,6 +69,11 @@ export interface EpisodePayload {
   featured?: boolean;
   free?: boolean;
   is_coming_soon?: boolean;
+  is_revenue_managed?: boolean;
+  is_svod_eligible?: boolean;
+  revenue_share_percent?: number;
+  price?: number;
+  currency?: string;
   subtitles?: { language: string; label: string; url: string }[];
   audio_tracks?: { language: string; label: string; url: string; isDefault?: boolean }[];
 }

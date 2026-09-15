@@ -47,6 +47,7 @@ const schema = z.object({
   featured: z.boolean(),
   free: z.boolean(),
   is_coming_soon: z.boolean().optional(),
+  is_revenue_managed: z.boolean().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
@@ -98,6 +99,7 @@ export default function EditEpisodePage() {
       rating: 0,
       featured: false,
       free: false,
+      is_revenue_managed: false,
       languages: '',
       trailer_url: '',
       trailer_alt: '',
@@ -162,6 +164,7 @@ export default function EditEpisodePage() {
             featured: ep.featured ?? ep.isFeatured ?? false,
             free: ep.free ?? ep.is_free ?? ep.isFree ?? false,
             is_coming_soon: ep.is_coming_soon || ep.isComingSoon || false,
+            is_revenue_managed: ep.is_revenue_managed ?? ep.isRevenueManaged ?? false,
             subtitles: ep.subtitles || [],
           });
 
@@ -237,6 +240,7 @@ export default function EditEpisodePage() {
         featured: data.featured,
         free: data.free,
         is_coming_soon: data.is_coming_soon,
+        is_revenue_managed: data.is_revenue_managed,
         subtitles: data.subtitles,
       };
 
@@ -621,6 +625,15 @@ export default function EditEpisodePage() {
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Coming Soon</label>
                 <input type="checkbox" {...register('is_coming_soon')} className="w-5 h-5 rounded border-border accent-primary" />
+              </div>
+              <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 mt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-emerald-400">SVOD Pro-Rata</label>
+                  <input type="checkbox" {...register('is_revenue_managed')} className="w-5 h-5 rounded border-border accent-emerald-500" />
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Enable to calculate watch-time revenue shares for this title.
+                </p>
               </div>
             </section>
           </div>

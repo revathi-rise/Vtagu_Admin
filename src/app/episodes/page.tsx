@@ -92,6 +92,22 @@ export default function EpisodesPage() {
       ),
     },
     {
+      accessorKey: 'is_revenue_managed',
+      header: 'SVOD',
+      cell: ({ row }) => {
+        const val = (row.original.isRevenueManaged ?? row.original.is_revenue_managed) as any;
+        const isManaged = val === true || val === 1 || val === '1' || val === 'true';
+        return (
+          <span className={cn(
+            'inline-flex items-center text-xs font-bold px-2 py-0.5 rounded',
+            isManaged ? 'text-emerald-500 bg-emerald-500/10' : 'text-muted-foreground bg-muted'
+          )}>
+            {isManaged ? 'YES' : 'NO'}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => <span className="text-muted-foreground">{row.original.createdAt ? formatDate(row.original.createdAt) : 'N/A'}</span>,
