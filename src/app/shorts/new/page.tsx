@@ -37,13 +37,13 @@ const shortSchema = z.object({
   languages: z.string().optional(),
   genre_id: z.string().optional(),
   is_free: z.boolean(),
-  price: z.number().optional(),
+  price: z.any().transform((val) => Number(val) || 0),
   currency: z.string().optional(),
   is_revenue_managed: z.boolean().optional(),
-  revenue_share_percent: z.number().optional(),
+  revenue_share_percent: z.any().transform((val) => Number(val) || 0),
   is_featured: z.boolean(),
   is_active: z.boolean(),
-  sort_order: z.number().min(0),
+  sort_order: z.any().transform((val) => Number(val) || 0),
 });
 
 type ShortFormValues = z.infer<typeof shortSchema>;
