@@ -641,7 +641,7 @@ function SubscriptionsContent() {
         const cur = row.original.currency || 'INR';
         return (
           <span className="font-semibold text-sm font-mono text-white">
-            {cur === 'INR' ? `₹${amt || 0}` : formatCurrency(amt || 0)}
+            {formatCurrency(amt || 0, cur)}
           </span>
         );
       }

@@ -5,6 +5,8 @@ export interface Transaction {
   txn_id: string;
   user_id: number;
   amount: string | number;
+  currency?: string;
+  currency_symbol?: string;
   status: string; // 'P' | 'C' | 'F'
   created_at: string;
 }

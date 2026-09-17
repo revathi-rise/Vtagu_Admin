@@ -174,9 +174,11 @@ function TransactionsContent() {
       header: 'Amount', 
       cell: ({ row }) => {
         const amt = Number(row.original.amount || 0);
+        const curr = row.original.currency || 'INR';
+        const symbol = row.original.currency_symbol;
         return (
           <span className="font-semibold text-sm font-mono text-white">
-            {formatCurrency(amt)}
+            {formatCurrency(amt, curr, symbol)}
           </span>
         );
       }
@@ -417,7 +419,7 @@ function TransactionsContent() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold">Amount:</p>
-                  <p className="text-sm font-mono font-medium text-white">{formatCurrency(Number(editingTransaction.amount))}</p>
+                  <p className="text-sm font-mono font-medium text-white">{formatCurrency(Number(editingTransaction.amount), editingTransaction.currency || 'INR', editingTransaction.currency_symbol)}</p>
                 </div>
               </div>
 
