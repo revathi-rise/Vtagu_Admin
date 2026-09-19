@@ -49,6 +49,7 @@ export default function InteractiveEditorPage() {
   const [showChoicesOn, setShowChoicesOn] = useState('00:00:00');
   const [isEnding, setIsEnding] = useState(false);
   const [endText, setEndText] = useState('');
+  const [isSceneFree, setIsSceneFree] = useState(false);
   const [sceneSubtitles, setSceneSubtitles] = useState<{ language: string; label: string; url: string }[]>([]);
 
   // Scene Preview Modal state
@@ -432,6 +433,7 @@ export default function InteractiveEditorPage() {
     setShowChoicesOn('00:00:00');
     setIsEnding(false);
     setEndText('');
+    setIsSceneFree(false);
     setSceneSubtitles([]);
     setIsSceneModalOpen(true);
   };
@@ -443,6 +445,7 @@ export default function InteractiveEditorPage() {
     setShowChoicesOn(scene.show_choices_on || (scene as any).show_on || '00:00:00');
     setIsEnding(Boolean(scene.is_ending));
     setEndText(scene.end_text || '');
+    setIsSceneFree(Boolean(scene.is_free));
     setSceneSubtitles((scene as any).subtitles || []);
     setIsSceneModalOpen(true);
   };
@@ -466,6 +469,7 @@ export default function InteractiveEditorPage() {
           show_choices_on: showChoicesOn.trim(),
           is_ending: isEnding,
           end_text: isEnding ? endText.trim() : '',
+          is_free: isSceneFree,
           subtitles: sceneSubtitles
         });
       } else {
@@ -477,6 +481,7 @@ export default function InteractiveEditorPage() {
           show_choices_on: showChoicesOn.trim(),
           is_ending: isEnding,
           end_text: isEnding ? endText.trim() : '',
+          is_free: isSceneFree,
           subtitles: sceneSubtitles
         });
       }
@@ -792,10 +797,19 @@ export default function InteractiveEditorPage() {
                     <div className="bg-card border border-border/80 rounded-2xl overflow-hidden shadow-md hover:border-primary/50 transition-colors">
                       {/* Scene Header */}
                       <div className="p-4 bg-muted/40 border-b border-border/40 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <div className="flex items-center gap-2 px-3 py-1 bg-primary/25 border border-primary/45 text-primary text-xs font-bold rounded-lg shadow-sm">
                             SCENE ID: #{scene.scene_id}
                           </div>
+                          {scene.is_free ? (
+                            <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-extrabold rounded-lg uppercase tracking-wide">
+                              Free Scene
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-extrabold rounded-lg uppercase tracking-wide">
+                              Locked Scene
+                            </span>
+                          )}
                           <h3 className="font-bold text-base text-white">{scene.scene_text}</h3>
                         </div>
                         
@@ -1018,7 +1032,7 @@ export default function InteractiveEditorPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Show Choices On</label>
                   <input 
@@ -1031,7 +1045,19 @@ export default function InteractiveEditorPage() {
                   />
                 </div>
 
-                <div className="flex flex-col justify-end pb-3">
+                <div className="flex flex-col justify-end space-y-2 pb-1">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input 
+                      type="checkbox"
+                      checked={isSceneFree}
+                      onChange={(e) => setIsSceneFree(e.target.checked)}
+                      className="rounded border-border text-emerald-500 focus:ring-0 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <span className="font-semibold text-sm text-emerald-400">
+                      Is Free Scene? (Teaser)
+                    </span>
+                  </label>
+
                   <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input 
                       type="checkbox"
