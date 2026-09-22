@@ -23,13 +23,15 @@ import {
   User,
   Coins,
   Image,
-  Video
+  Video,
+  ShieldAlert
 } from 'lucide-react';
 
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
   { icon: Users, label: 'Users', href: '/users' },
+  { icon: ShieldAlert, label: 'Audit Logs', href: '/audit-logs' },
   { icon: Film, label: 'Movies', href: '/movies' },
   { icon: Video, label: 'Shorts', href: '/shorts' },
   { icon: Tv, label: 'Web Series', href: '/series' },
@@ -52,8 +54,8 @@ export function Sidebar() {
   const { hasPermission } = useAuthStore();
 
   const filteredMenuItems = menuItems.filter(item => {
-    // Dashboard is always visible if they can log in
-    if (item.label === 'Dashboard' || item.label === 'FAQ') return true;
+    // Dashboard and Audit Logs are visible for admin roles
+    if (item.label === 'Dashboard' || item.label === 'FAQ' || item.label === 'Audit Logs') return true;
     return hasPermission(item.label);
   });
 
