@@ -18,6 +18,8 @@ export interface User {
   plan?: string;
   plan_price?: number;
   type?: string;
+  is_kids_mode?: boolean;
+  has_parental_pin?: boolean;
 }
 
 export interface AuthResponse {

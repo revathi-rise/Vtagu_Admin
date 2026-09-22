@@ -15,6 +15,7 @@ export interface Scene {
   movie_id: number;
   scene_text: string;
   poster_url: string;
+  scene_url?: string;
   choices: Choice[];
   show_choices_on?: string;
   is_ending?: boolean;
@@ -26,7 +27,7 @@ export interface Scene {
 
 export const sceneService = {
   getByMovieId: async (movieId: number) => {
-    const response = await apiClient.get<{ status: string; data: Scene[] }>(`/scenes?id=${movieId}`);
+    const response = await apiClient.get<{ status: string; data: Scene[] }>(`/scenes?id=${movieId}&admin=true`);
     return response.data.data;
   },
 

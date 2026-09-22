@@ -441,7 +441,7 @@ export default function InteractiveEditorPage() {
   const handleOpenEditScene = (scene: Scene) => {
     setEditingScene(scene);
     setSceneName(scene.scene_text);
-    setSceneUrl(scene.poster_url);
+    setSceneUrl(scene.poster_url || scene.scene_url || (scene as any).scence_url || '');
     setShowChoicesOn(scene.show_choices_on || (scene as any).show_on || '00:00:00');
     setIsEnding(Boolean(scene.is_ending));
     setEndText(scene.end_text || '');
@@ -840,9 +840,9 @@ export default function InteractiveEditorPage() {
                           <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Video Asset URL</span>
                             <p className="text-xs text-zinc-400 break-all font-mono bg-muted/30 px-2 py-1.5 rounded-lg border border-border/20 mb-3">
-                              {scene.poster_url}
+                              {scene.poster_url || scene.scene_url || (scene as any).scence_url}
                             </p>
-                            {scene.poster_url && (
+                            {(scene.poster_url || scene.scene_url || (scene as any).scence_url) && (
                               <button
                                 onClick={() => {
                                   setPreviewScene(scene);
@@ -1661,7 +1661,7 @@ export default function InteractiveEditorPage() {
 
             <div className="mt-5 flex flex-col items-center justify-center bg-black/40 rounded-2xl p-2 overflow-hidden aspect-video border border-border/30">
               {(() => {
-                const url = previewScene.poster_url;
+                const url = previewScene.poster_url || previewScene.scene_url || (previewScene as any).scence_url;
                 const ytMatch = url?.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
                 const isYouTube = ytMatch && ytMatch[2].length === 11;
                 
@@ -1700,7 +1700,7 @@ export default function InteractiveEditorPage() {
             
             <div className="mt-4 flex justify-between items-center text-xs text-muted-foreground">
               <span>Scene ID: #{previewScene.scene_id}</span>
-              <span className="font-mono break-all max-w-[70%]">{previewScene.poster_url}</span>
+              <span className="font-mono break-all max-w-[70%]">{previewScene.poster_url || previewScene.scene_url || (previewScene as any).scence_url}</span>
             </div>
           </div>
         </>
