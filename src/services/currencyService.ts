@@ -12,8 +12,8 @@ export interface Currency {
 }
 
 export const currencyService = {
-  getAll: async (): Promise<Currency[]> => {
-    const response = await apiClient.get<{ status: boolean; data: Currency[] }>('/currencies');
+  getAll: async (limit?: number): Promise<Currency[]> => {
+    const response = await apiClient.get<{ status: boolean; data: Currency[] }>(limit ? `/currencies?limit=${limit}` : '/currencies');
     const data = response.data?.data || response.data || [];
     return data.map(c => c.code.toUpperCase() === 'INR' ? { ...c, symbol: '₹' } : c);
   },

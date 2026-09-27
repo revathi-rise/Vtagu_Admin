@@ -11,8 +11,9 @@ export interface Genre {
 }
 
 export const genreService = {
-  getAll: async () => {
-    const response = await apiClient.get<{ status: boolean; data: Genre[] }>('/genres');
+  getAll: async (limit?: number) => {
+    const url = limit ? `/genres?limit=${limit}` : '/genres';
+    const response = await apiClient.get<{ status: boolean; data: Genre[] }>(url);
     return response.data.data;
   },
 

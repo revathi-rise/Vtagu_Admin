@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 
 function TransactionsContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,11 +53,12 @@ function TransactionsContent() {
     fetchTransactions();
   }, []);
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? limit;
     try {
       setIsLoading(true);
       setError(null);
-      const data = await transactionService.getAll();
+      const data = await transactionService.getAll(targetLimit);
       setTransactions(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Failed to fetch transactions:', err);
@@ -250,7 +252,7 @@ function TransactionsContent() {
             Create Transaction
           </button>
           <button 
-            onClick={fetchTransactions}
+            onClick={() => fetchTransactions()}
             className="p-2.5 hover:bg-muted rounded-xl border border-border/80 transition-colors text-white"
             title="Refresh Data"
           >
@@ -274,7 +276,7 @@ function TransactionsContent() {
           <p className="text-muted-foreground">Loading transaction logs...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={transactions} searchPlaceholder="Search transactions..." />
+        <DataTable columns={columns} data={transactions} searchPlaceholder="Search transactions..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchTransactions(newLimit); }} />
       )}
 
       {/* --- ADD TRANSACTION MODAL --- */}

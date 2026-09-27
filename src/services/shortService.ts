@@ -47,8 +47,8 @@ export interface ShortPayload {
 }
 
 export const shortService = {
-  getAll: async (): Promise<Short[]> => {
-    const response = await apiClient.get<{ status: boolean; data: Short[] }>('/shorts');
+  getAll: async (limit?: number): Promise<Short[]> => {
+    const response = await apiClient.get<{ status: boolean; data: Short[] }>(limit ? `/shorts?limit=${limit}` : '/shorts');
     return response.data?.data || [];
   },
 

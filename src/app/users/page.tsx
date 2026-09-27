@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [userLimit, setUserLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user: currentUser } = useAuthStore();
@@ -22,11 +23,12 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? userLimit;
     try {
       setIsLoading(true);
       setError(null);
-      const data = await userService.getAll();
+      const data = await userService.getAll(targetLimit);
       setUsers(data || []);
     } catch (err: any) {
       console.error('Failed to fetch users:', err);
@@ -266,7 +268,7 @@ export default function UsersPage() {
             <UserIcon className="w-4 h-4" /> Add User
           </button>
           <button 
-            onClick={fetchUsers}
+            onClick={() => fetchUsers()}
             className="text-sm font-medium text-primary hover:underline flex items-center gap-2"
           >
             Refresh Data
@@ -287,7 +289,7 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Fetching subscribers...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={users} searchPlaceholder="Search users by name or email..." />
+        <DataTable columns={columns} data={users} searchPlaceholder="Search users by name or email..." onLimitChange={(newLimit) => { setUserLimit(newLimit); fetchUsers(newLimit); }} />
       )}
 
 

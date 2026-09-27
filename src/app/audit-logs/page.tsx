@@ -8,11 +8,12 @@ export default function AuditLogsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [limit, setLimit] = useState<number>(20);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (currentLimit = limit) => {
     setLoading(true);
     try {
-      const res = await auditLogService.getAll(100, 0);
+      const res = await auditLogService.getAll(currentLimit, 0);
       setLogs(res.data);
       setTotal(res.total);
     } catch (err) {
@@ -23,8 +24,12 @@ export default function AuditLogsPage() {
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    fetchLogs(limit);
+  }, [limit]);
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+  };
 
   const filteredLogs = logs.filter(log => {
     const term = searchTerm.toLowerCase();
@@ -49,14 +54,29 @@ export default function AuditLogsPage() {
             Real-time immutable audit trail for sensitive administrative, pricing, and access control changes.
           </p>
         </div>
-        <button
-          onClick={fetchLogs}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm transition-colors border border-gray-700 shadow-md"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Logs
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 font-medium">Show</span>
+            <select
+              value={limit}
+              onChange={(e) => handleLimitChange(Number(e.target.value))}
+              className="bg-gray-900 border border-gray-700 text-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none focus:border-amber-500 cursor-pointer shadow-sm"
+            >
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+              <option value={500}>500 per page</option>
+            </select>
+          </div>
+          <button
+            onClick={() => fetchLogs(limit)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white font-medium text-sm transition-colors border border-gray-700 shadow-md"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Logs
+          </button>
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -71,8 +91,23 @@ export default function AuditLogsPage() {
             className="w-full pl-10 pr-4 py-2 bg-gray-950 border border-gray-800 rounded-lg text-white text-sm focus:outline-none focus:border-amber-500"
           />
         </div>
-        <div className="text-xs text-gray-400 font-medium">
-          Showing <span className="text-white font-bold">{filteredLogs.length}</span> of {total} logs
+        <div className="flex items-center gap-3">
+          <div className="text-xs text-gray-400 font-medium">
+            Showing <span className="text-white font-bold">{filteredLogs.length}</span> of {total} logs
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400">Limit:</span>
+            <select
+              value={limit}
+              onChange={(e) => handleLimitChange(Number(e.target.value))}
+              className="bg-gray-950 border border-gray-800 text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-amber-500"
+            >
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={500}>500</option>
+            </select>
+          </div>
         </div>
       </div>
 

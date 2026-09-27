@@ -38,6 +38,7 @@ export default function InteractiveEditorPage() {
   
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [isLoadingMovies, setIsLoadingMovies] = useState(true);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoadingScenes, setIsLoadingScenes] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -264,7 +265,7 @@ export default function InteractiveEditorPage() {
 
       if (editingMovieObj) {
         const updated = await interactiveMovieService.update(editingMovieObj.interactive_movie_id, payload);
-        setMovies(prev => prev.map(m => m.interactive_movie_id === editingMovieObj.interactive_movie_id ? updated : m));
+        setMovies(prev => prev.slice(0, limit).map(m => m.interactive_movie_id === editingMovieObj.interactive_movie_id ? updated : m));
       } else {
         const created = await interactiveMovieService.create(payload);
         setMovies(prev => [...prev, created]);

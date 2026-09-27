@@ -7,22 +7,23 @@ import { genreService, Genre } from '@/services/genreService';
 export default function GenresPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [limit, setLimit] = useState<number>(20);
 
-  useEffect(() => {
-    fetchGenres();
-  }, []);
-
-  const fetchGenres = async () => {
+  const fetchGenres = async (currentLimit = limit) => {
     try {
       setIsLoading(true);
-      const data = await genreService.getAll();
-      setGenres(data);
+      const data = await genreService.getAll(currentLimit);
+      setGenres(data || []);
     } catch (error) {
       console.error('Failed to fetch genres:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchGenres(limit);
+  }, [limit]);
 
   return (
     <div className="space-y-6">
@@ -31,10 +32,25 @@ export default function GenresPage() {
           <h1 className="text-3xl font-bold">Genres</h1>
           <p className="text-muted-foreground">Manage content categories and discovery tags.</p>
         </div>
-        <button className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Add Genre
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">Show</span>
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              className="bg-card border border-border text-foreground rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer shadow-sm"
+            >
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+              <option value={500}>500 per page</option>
+            </select>
+          </div>
+          <button className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Add Genre
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

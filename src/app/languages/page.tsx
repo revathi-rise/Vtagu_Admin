@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 export default function LanguagesPage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [limit, setLimit] = useState<number>(20);
   const [error, setError] = useState<string | null>(null);
 
   // Detail drawer state for movies
@@ -26,13 +27,13 @@ export default function LanguagesPage() {
 
   useEffect(() => {
     fetchLanguages();
-  }, []);
+  }, [limit]);
 
   const fetchLanguages = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await languageService.getAll(true); // Fetch all including hidden
+      const data = await languageService.getAll(true, limit);
       setLanguages(data || []);
     } catch (err: any) {
       console.error('Failed to fetch languages:', err);
@@ -143,7 +144,20 @@ export default function LanguagesPage() {
           <h1 className="text-3xl font-bold tracking-tight text-white">Languages</h1>
           <p className="text-muted-foreground mt-1">Manage content languages, visibility, and discover associated movies.</p>
         </div>
-        <button 
+        <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">Show</span>
+            <select
+              value={limit}
+              onChange={(e) => setLimit(Number(e.target.value))}
+              className="bg-card border border-border text-foreground rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none cursor-pointer shadow-sm"
+            >
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
+              <option value={500}>500 per page</option>
+            </select>
+          </div>
+          <button 
           onClick={handleOpenAddModal}
           className="bg-brand-gradient text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >

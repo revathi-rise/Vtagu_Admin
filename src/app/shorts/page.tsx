@@ -23,6 +23,7 @@ import Link from 'next/link';
 
 export default function ShortsPage() {
   const [shorts, setShorts] = useState<Short[]>([]);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [shortToDelete, setShortToDelete] = useState<Short | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,10 +33,11 @@ export default function ShortsPage() {
     fetchShorts();
   }, []);
 
-  const fetchShorts = async () => {
+  const fetchShorts = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? limit;
     try {
       setIsLoading(true);
-      const data = await shortService.getAll();
+      const data = await shortService.getAll(targetLimit);
       setShorts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch shorts:', error);

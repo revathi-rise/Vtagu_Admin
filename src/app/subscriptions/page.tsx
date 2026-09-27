@@ -87,6 +87,7 @@ function SubscriptionsContent() {
 
   // --- USER SUBSCRIPTIONS STATE ---
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subLimit, setSubLimit] = useState<number>(20);
   const [isLoadingSubs, setIsLoadingSubs] = useState(true);
   const [subsError, setSubsError] = useState<string | null>(null);
 
@@ -162,11 +163,12 @@ function SubscriptionsContent() {
     }
   };
 
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? subLimit;
     try {
       setIsLoadingSubs(true);
       setSubsError(null);
-      const data = await subscriptionService.getAll();
+      const data = await subscriptionService.getAll(targetLimit);
       setSubscriptions(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Failed to fetch subscriptions:', err);
@@ -759,7 +761,7 @@ function SubscriptionsContent() {
             </button>
           )}
           <button 
-            onClick={activeTab === 'plans' ? fetchPlans : fetchSubscriptions}
+            onClick={activeTab === 'plans' ? fetchPlans : () => fetchSubscriptions()}
             className="p-2.5 hover:bg-muted rounded-xl border border-border/80 transition-colors text-white"
             title="Refresh Data"
           >
@@ -989,7 +991,7 @@ function SubscriptionsContent() {
               <p className="text-muted-foreground">Loading transaction history...</p>
             </div>
           ) : (
-            <DataTable columns={userSubColumns} data={subscriptions} searchPlaceholder="Search by ID or User..." />
+            <DataTable columns={userSubColumns} data={subscriptions} searchPlaceholder="Search by ID or User..." onLimitChange={(newLimit) => { setSubLimit(newLimit); fetchSubscriptions(newLimit); }} />
           )}
         </div>
       )}

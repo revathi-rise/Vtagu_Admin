@@ -15,10 +15,9 @@ export interface LanguageMoviesResponse {
 }
 
 export const languageService = {
-  getAll: async (all = true): Promise<Language[]> => {
-    const response = await apiClient.get<{ status: boolean; message: string; data: Language[] }>(
-      `/languages?all=${all}`
-    );
+  getAll: async (all = true, limit?: number): Promise<Language[]> => {
+    const url = `/languages?all=${all}${limit ? '&limit=' + limit : ''}`;
+    const response = await apiClient.get< { status: boolean; message: string; data: Language[] } >(url);
     return response.data.data;
   },
 
@@ -28,12 +27,12 @@ export const languageService = {
   },
 
   create: async (data: { name: string; code: string; is_visible?: boolean }): Promise<Language> => {
-    const response = await apiClient.post<{ status: boolean; data: Language }>('/languages', data);
+    const response = await apiClient.post< { status: boolean; data: Language } >('/languages', data);
     return response.data.data;
   },
 
   update: async (id: number, data: { name?: string; code?: string; is_visible?: boolean }): Promise<Language> => {
-    const response = await apiClient.put<{ status: boolean; data: Language }>(`/languages/${id}`, data);
+    const response = await apiClient.put<{ status: boolean; data: Language } >(`languages/${id}`, data);
     return response.data.data;
   },
 

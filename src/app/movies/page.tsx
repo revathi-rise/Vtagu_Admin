@@ -24,6 +24,7 @@ import Link from 'next/link';
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -32,10 +33,11 @@ export default function MoviesPage() {
     fetchMovies();
   }, []);
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? limit;
     try {
       setIsLoading(true);
-      const data = await movieService.getAll();
+      const data = await movieService.getAll(targetLimit);
       setMovies(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch movies:', error);

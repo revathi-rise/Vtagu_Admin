@@ -79,9 +79,12 @@ export interface EpisodePayload {
 }
 
 export const episodeService = {
-  getAll: async (seasonId?: number) => {
+  getAll: async (seasonId?: number, limit?: number) => {
     try {
-      const url = seasonId ? `/episodes?season_id=${seasonId}` : '/episodes';
+      const params = new URLSearchParams();
+    if (seasonId) params.append("season_id", String(seasonId));
+    if (limit) params.append("limit", String(limit));
+    const url = params.toString() ? `/episodes?${params.toString()}` : "/episodes";
       const response = await apiClient.get<{ status: boolean; data: Episode[] }>(url);
       return response.data.data || [];
     } catch (error: any) {

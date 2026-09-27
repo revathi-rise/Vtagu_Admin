@@ -38,6 +38,7 @@ function groupBySeasonId(episodes: Episode[]): Record<number, Episode[]> {
 export default function SeriesPage() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [limit, setLimit] = useState<number>(20);
   const [error, setError] = useState<string | null>(null);
   const [expandedSeasons, setExpandedSeasons] = useState<Set<number>>(new Set());
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -202,7 +203,7 @@ export default function SeriesPage() {
         <>
           {/* ── Summary cards ──────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {summaryCards.map(card => (
+            {summaryCards.slice(0, limit).map(card => (
               <div key={card.label} className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
                 <div className={cn('p-2.5 rounded-xl', card.bg)}>
                   <card.icon className={cn('w-5 h-5', card.color)} />

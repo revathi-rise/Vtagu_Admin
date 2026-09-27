@@ -12,7 +12,7 @@ export interface Transaction {
 }
 
 export const transactionService = {
-  getAll: async () => {
+  getAll: async (limit?: number) => {
     const response = await apiClient.get<{ status: boolean; data: Transaction[] }>('/transactions');
     return response.data?.data || response.data || [];
   },

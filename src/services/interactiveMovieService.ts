@@ -19,7 +19,7 @@ export interface InteractiveMovie {
 }
 
 export const interactiveMovieService = {
-  getAll: async (): Promise<InteractiveMovie[]> => {
+  getAll: async (limit?: number): Promise<InteractiveMovie[]> => {
     const response = await apiClient.get<{ status: string; total_count: number; data: InteractiveMovie[] }>('/interactive-movies');
     if (response.data.status === 'success' || (response.data as any).status === true) {
       return response.data.data;

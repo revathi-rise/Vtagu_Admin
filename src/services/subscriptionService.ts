@@ -17,8 +17,9 @@ export interface Subscription {
 }
 
 export const subscriptionService = {
-  getAll: async () => {
-    const response = await apiClient.get<{ status: boolean; data: Subscription[] }>('/subscriptions');
+  getAll: async (limit?: number) => {
+    const url = limit ? `/subscriptions?limit=${limit}` : '/subscriptions';
+    const response = await apiClient.get<{ status: boolean; data: Subscription[] }>(url);
     return response.data?.data || response.data || [];
   },
 

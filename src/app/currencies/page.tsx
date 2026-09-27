@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 
 export default function CurrenciesPage() {
   const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,11 +56,12 @@ export default function CurrenciesPage() {
     fetchCurrencies();
   }, []);
 
-  const fetchCurrencies = async () => {
+  const fetchCurrencies = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? limit;
     try {
       setIsLoading(true);
       setError(null);
-      const data = await currencyService.getAll();
+      const data = await currencyService.getAll(targetLimit);
       setCurrencies(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Failed to fetch currencies:', err);
@@ -258,7 +260,7 @@ export default function CurrenciesPage() {
             Add Currency
           </button>
           <button 
-            onClick={fetchCurrencies}
+            onClick={() => fetchCurrencies()}
             className="p-2 hover:bg-muted rounded-xl border border-border/80 transition-colors"
             title="Refresh Data"
           >
@@ -280,7 +282,7 @@ export default function CurrenciesPage() {
           <p className="text-muted-foreground">Loading currencies list...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={currencies} searchPlaceholder="Search by Name or Code..." />
+        <DataTable columns={columns} data={currencies} searchPlaceholder="Search by Name or Code..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchCurrencies(newLimit); }} />
       )}
 
       {/* --- ADD MODAL --- */}

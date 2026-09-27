@@ -7,6 +7,7 @@ import { DataTable } from '@/components/ui/DataTable';
 
 export default function ActorsPage() {
   const [actors, setActors] = useState<Actor[]>([]);
+  const [limit, setLimit] = useState<number>(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +25,12 @@ export default function ActorsPage() {
     fetchActors();
   }, []);
 
-  const fetchActors = async () => {
+  const fetchActors = async (selectedLimit?: number) => {
+    const targetLimit = selectedLimit ?? limit;
     try {
       setIsLoading(true);
       setError(null);
-      const data = await actorService.getAll();
+      const data = await actorService.getAll(targetLimit);
       setActors(data || []);
     } catch (err) {
       console.error('Failed to fetch actors:', err);
@@ -212,7 +214,7 @@ export default function ActorsPage() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable columns={columns} data={actors} searchPlaceholder="Search actors by name or country..." />
+        <DataTable columns={columns} data={actors} searchPlaceholder="Search actors by name or country..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchActors(newLimit); }} />
       )}
 
       {/* Add / Edit Actor Modal */}

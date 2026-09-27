@@ -73,9 +73,10 @@ export const userService = {
   // Note: The documentation doesn't have a specific "getAllUsers" endpoint for admin, 
   // but usually admin panels need this. I'll assume /users might work or I'll check if there's one.
   // For now, I'll add it as a placeholder.
-  getAll: async (): Promise<User[]> => {
+  getAll: async (limit?: number): Promise<User[]> => {
     try {
-      const response = await apiClient.get<{ status: boolean; data: User[] }>('/users');
+      const url = limit ? `/users?limit=${limit}` : '/users';
+      const response = await apiClient.get<{ status: boolean; data: User[] }>(url);
       return response.data.data || [];
     } catch (error: any) {
       if (error.response?.status === 404) {

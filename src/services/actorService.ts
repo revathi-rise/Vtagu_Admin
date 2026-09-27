@@ -13,9 +13,9 @@ export interface Actor {
 }
 
 export const actorService = {
-  getAll: async (): Promise<Actor[]> => {
+  getAll: async (limit?: number): Promise<Actor[]> => {
     try {
-      const response = await apiClient.get('/actors');
+      const response = await apiClient.get(limit ? `/actors?limit=${limit}` : '/actors');
       const res = response.data;
       if (Array.isArray(res)) return res;
       if (Array.isArray(res?.data)) return res.data;

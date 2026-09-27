@@ -25,12 +25,18 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   searchPlaceholder?: string;
+  initialPageSize?: number;
+  pageSizeOptions?: number[];
+  onLimitChange?: (limit: number) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   searchPlaceholder = "Search...",
+  initialPageSize = 20,
+  pageSizeOptions = [20, 50, 100, 500],
+  onLimitChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -47,6 +53,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: initialPageSize,
+      },
+    },
     state: {
       sorting,
       columnFilters,
@@ -55,9 +66,18 @@ export function DataTable<TData, TValue>({
     onGlobalFilterChange: setGlobalFilter,
   });
 
+  const currentPageSize = table.getState().pagination.pageSize;
+
+  const handlePageSizeChange = (val: number) => {
+    table.setPageSize(val);
+    if (onLimitChange) {
+      onLimitChange(val);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -67,8 +87,19 @@ export function DataTable<TData, TValue>({
             className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 transition-all"
           />
         </div>
-        <div className="flex items-center gap-2">
-          {/* Active Filters could go here */}
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <span className="text-xs text-muted-foreground font-medium">Show</span>
+          <select
+            value={currentPageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            className="bg-card border border-border text-foreground rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none focus:ring-2 ring-primary/20 cursor-pointer shadow-sm"
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option} per page
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -117,30 +148,49 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{' '}
-          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, safeData.length)}{' '}
-          of {safeData.length} entries
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="text-sm font-medium px-4">
-            Page {table.getState().pagination.pageIndex + 1}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div>
+            Showing {safeData.length > 0 ? table.getState().pagination.pageIndex * currentPageSize + 1 : 0} to{' '}
+            {Math.min((table.getState().pagination.pageIndex + 1) * currentPageSize, safeData.length)}{' '}
+            of {safeData.length} entries
           </div>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition-colors"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">Limit:</span>
+            <select
+              value={currentPageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className="bg-card border border-border text-foreground rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-1 ring-primary/30 cursor-pointer shadow-sm"
+            >
+              {pageSizeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-sm font-medium px-3">
+              Page {table.getState().pagination.pageIndex + 1}
+            </div>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

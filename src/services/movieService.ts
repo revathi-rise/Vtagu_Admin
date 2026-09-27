@@ -114,8 +114,8 @@ export interface MoviePayload {
 
 
 export const movieService = {
-  getAll: async () => {
-    const response = await apiClient.get<{ status: boolean; data: Movie[] }>('/movies');
+  getAll: async (limit?: number) => {
+    const response = await apiClient.get<{ status: boolean; data: Movie[] }>(limit ? `/movies?limit=${limit}` : '/movies');
     return response.data?.data || response.data || [];
   },
   
