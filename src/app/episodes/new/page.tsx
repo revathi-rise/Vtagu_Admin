@@ -50,6 +50,7 @@ const schema = z.object({
   free: z.boolean(),
   is_coming_soon: z.boolean().optional(),
   is_revenue_managed: z.boolean().optional(),
+  kids_restriction: z.boolean().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
@@ -108,6 +109,7 @@ export default function NewEpisodePage() {
       free: false,
       is_coming_soon: false,
       is_revenue_managed: false,
+      kids_restriction: false,
       languages: '',
       trailer_url: '',
       trailer_alt: '',
@@ -191,6 +193,7 @@ export default function NewEpisodePage() {
         featured: data.featured,
         free: data.free,
         is_coming_soon: data.is_coming_soon,
+        kids_restriction: data.kids_restriction,
         is_revenue_managed: data.is_revenue_managed,
         subtitles: data.subtitles,
       };
@@ -642,6 +645,16 @@ export default function NewEpisodePage() {
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   <span className="text-foreground/80 font-medium">☑ Checked:</span> The episode is Free and anyone can watch it.<br/>
                   <span className="text-foreground/80 font-medium">☐ Unchecked:</span> The episode is Paid (requires subscription or purchase).
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-amber-400">Kids Content (Kids Mode)</label>
+                  <input type="checkbox" {...register('kids_restriction')} className="w-5 h-5 rounded border-border accent-amber-500 cursor-pointer" />
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <span className="text-foreground/80 font-medium">☑ Checked:</span> Visible in Kids Mode / Restricted for Kids profile.<br/>
+                  <span className="text-foreground/80 font-medium">☐ Unchecked:</span> Adult / General Content.
                 </p>
               </div>
               <div className="flex items-center justify-between">

@@ -268,6 +268,7 @@ export default function NewShortPage() {
       currency: 'INR',
       is_revenue_managed: false,
       is_featured: false,
+      kids_restriction: false,
       is_active: true,
       sort_order: 0,
       genre_id: undefined,
@@ -573,6 +574,12 @@ export default function NewShortPage() {
             </div>
 
             <div className="mt-4 pt-4 border-t border-border/40">
+              <Toggle
+                label="Kids Content (Kids Mode)"
+                description="Visible in Kids Mode / Restricted for Kids profile"
+                checked={!!watch('kids_restriction')}
+                onChange={(v) => setValue('kids_restriction', v)}
+              />
               <Toggle
                 label="Featured"
               description="Highlight in featured sections"

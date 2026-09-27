@@ -48,6 +48,7 @@ const movieSchema = z.object({
   is_interactive: z.boolean(),
   is_coming_soon: z.boolean().optional(),
   is_revenue_managed: z.boolean().optional(),
+  kids_restriction: z.boolean().optional(),
   movie_type: z.string().optional(),
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
@@ -160,6 +161,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
       free: false,
       is_interactive: false,
       is_revenue_managed: false,
+      kids_restriction: false,
       movie_type: '1',
       year: new Date().getFullYear(),
       languages: '',
@@ -306,6 +308,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
           setValue('is_interactive', parseBool(data.is_interactive) || parseBool(data.isInteractive), { shouldValidate: true });
           setValue('is_coming_soon', parseBool(data.is_coming_soon) || parseBool(data.isComingSoon), { shouldValidate: true });
           setValue('is_revenue_managed', parseBool(data.is_revenue_managed) || parseBool(data.isRevenueManaged) || parseBool((data as any).is_revenue_shared) || parseBool((data as any).isRevenueShared), { shouldValidate: true });
+          setValue('kids_restriction', parseBool((data as any).kids_restriction) || parseBool((data as any).kidsRestriction), { shouldValidate: true });
           setValue('movie_type', String(data.movieType || data.contentType || '1'), { shouldValidate: true });
           setValue('languages', data.languages || '', { shouldValidate: true });
           if (data.languages) {
@@ -397,6 +400,7 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
         isFree: data.free,
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
+        kids_restriction: data.kids_restriction,
         is_revenue_managed: data.is_revenue_managed,
         isRevenueManaged: data.is_revenue_managed,
         is_revenue_shared: data.is_revenue_managed,
@@ -1092,6 +1096,16 @@ export default function EditMoviePage({ params }: { params: Promise<{ id: string
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">Coming Soon</label>
               <input type="checkbox" {...register('is_coming_soon')} className="w-5 h-5 rounded border-border" />
+            </div>
+            <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-amber-400">Kids Content (Kids Mode)</label>
+                <input type="checkbox" {...register('kids_restriction')} className="w-5 h-5 rounded border-border accent-amber-500 cursor-pointer" />
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-foreground/80 font-medium">☑ Checked:</span> Visible in Kids Mode / Restricted for Kids profile.<br/>
+                <span className="text-foreground/80 font-medium">☐ Unchecked:</span> Adult / General Content.
+              </p>
             </div>
             <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
               <div className="flex items-center justify-between">

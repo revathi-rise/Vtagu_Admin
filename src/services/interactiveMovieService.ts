@@ -10,6 +10,7 @@ export interface InteractiveMovie {
   languages?: string | null;
   created_at?: string;
   is_free?: number;
+  kids_restriction?: number | boolean;
   price?: number;
   currency?: string;
   is_revenue_managed?: number | boolean;

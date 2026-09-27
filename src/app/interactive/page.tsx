@@ -215,6 +215,7 @@ export default function InteractiveEditorPage() {
     setMovieTrailer('');
     setSelectedLanguages([]);
     setMovieIsFree(true);
+    setMovieKidsRestriction(false);
     setMoviePrice('0.00');
     setMovieCurrency('INR');
     setIsRevenueManaged(false);
@@ -233,6 +234,7 @@ export default function InteractiveEditorPage() {
     setMovieTrailer(movie.trailer_video_url || '');
     setSelectedLanguages(movie.languages ? movie.languages.split(',').map(l => l.trim()).filter(Boolean) : []);
     setMovieIsFree(movie.is_free !== 0);
+    setMovieKidsRestriction(movie.kids_restriction === 1 || movie.kids_restriction === true);
     setMoviePrice(movie.price !== undefined ? movie.price.toString() : '0.00');
     setMovieCurrency(movie.currency || 'INR');
     const revManaged = (movie.isRevenueManaged ?? movie.is_revenue_managed) as any;
@@ -255,6 +257,7 @@ export default function InteractiveEditorPage() {
         trailer_video_url: movieTrailer.trim() || undefined,
         languages: selectedLanguages.join(', '),
         is_free: movieIsFree ? 1 : 0,
+        kids_restriction: movieKidsRestriction ? 1 : 0,
         price: movieIsFree ? 0 : Number(moviePrice) || 0,
         currency: movieCurrency,
         is_revenue_managed: isRevenueManaged ? 1 : 0,

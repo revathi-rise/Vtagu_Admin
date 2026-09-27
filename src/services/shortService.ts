@@ -13,6 +13,7 @@ export interface Short {
   is_free: boolean;
   is_featured: boolean;
   is_active: boolean;
+  kids_restriction?: boolean | number;
   view_count: number;
   sort_order: number;
   created_at: string;
@@ -37,6 +38,7 @@ export interface ShortPayload {
   is_free?: boolean;
   is_featured?: boolean;
   is_active?: boolean;
+  kids_restriction?: boolean | number;
   sort_order?: number;
   price?: number;
   currency?: string;

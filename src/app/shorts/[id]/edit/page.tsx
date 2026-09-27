@@ -508,7 +508,13 @@ export default function EditShortPage({ params }: PageProps) {
             </div>
 
             <div className="mt-4 pt-4 border-t border-border/40">
-              <Toggle label="Featured" description="Highlight in featured sections" checked={watch('is_featured')} onChange={(v) => setValue('is_featured', v)} />
+              <Toggle label="Kids Content (Kids Mode)"
+                description="Visible in Kids Mode / Restricted for Kids profile"
+                checked={!!watch('kids_restriction')}
+                onChange={(v) => setValue('kids_restriction', v)}
+              />
+              <Toggle
+                label="Featured" description="Highlight in featured sections" checked={watch('is_featured')} onChange={(v) => setValue('is_featured', v)} />
             </div>
             <div className="mt-4 pt-4 border-t border-border/40">
               <Toggle label="Active / Live" description="Show on public Shorts feed" checked={watch('is_active')} onChange={(v) => setValue('is_active', v)} />
