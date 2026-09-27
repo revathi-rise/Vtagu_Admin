@@ -304,6 +304,8 @@ export default function ShortsPage() {
             columns={columns}
             data={shorts}
             searchPlaceholder="Search shorts by title, language..."
+            initialPageSize={limit}
+            onLimitChange={(newLimit) => { setLimit(newLimit); fetchShorts(newLimit); }}
           />
         )}
       </div>

@@ -290,6 +290,8 @@ export default function MoviesPage() {
             columns={columns} 
             data={movies} 
             searchPlaceholder="Search movies by title, genre, or director..." 
+            initialPageSize={limit}
+            onLimitChange={(newLimit) => { setLimit(newLimit); fetchMovies(newLimit); }}
           />
         )}
       </div>

@@ -17,6 +17,7 @@ export default function GenresPage() {
     } catch (error) {
       console.error('Failed to fetch genres:', error);
     } finally {
+      3
       setIsLoading(false);
     }
   };

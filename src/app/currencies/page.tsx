@@ -282,7 +282,7 @@ export default function CurrenciesPage() {
           <p className="text-muted-foreground">Loading currencies list...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={currencies} searchPlaceholder="Search by Name or Code..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchCurrencies(newLimit); }} />
+        <DataTable columns={columns} data={currencies} searchPlaceholder="Search by Name or Code..." initialPageSize={limit} onLimitChange={(newLimit) => { setLimit(newLimit); fetchCurrencies(newLimit); }} />
       )}
 
       {/* --- ADD MODAL --- */}

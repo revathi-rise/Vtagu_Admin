@@ -41,6 +41,19 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: initialPageSize,
+  });
+
+  React.useEffect(() => {
+    setPagination((prev) => {
+      if (prev.pageSize !== initialPageSize) {
+        return { ...prev, pageSize: initialPageSize, pageIndex: 0 };
+      }
+      return prev;
+    });
+  }, [initialPageSize]);
 
   const safeData = Array.isArray(data) ? data : [];
 
@@ -53,16 +66,13 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: initialPageSize,
-      },
-    },
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      pagination,
     },
+    onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
   });
 

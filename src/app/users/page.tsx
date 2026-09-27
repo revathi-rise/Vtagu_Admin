@@ -289,7 +289,7 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Fetching subscribers...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={users} searchPlaceholder="Search users by name or email..." onLimitChange={(newLimit) => { setUserLimit(newLimit); fetchUsers(newLimit); }} />
+        <DataTable columns={columns} data={users} searchPlaceholder="Search users by name or email..." initialPageSize={userLimit} onLimitChange={(newLimit) => { setUserLimit(newLimit); fetchUsers(newLimit); }} />
       )}
 
 

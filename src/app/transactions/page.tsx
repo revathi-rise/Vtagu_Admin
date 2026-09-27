@@ -276,7 +276,7 @@ function TransactionsContent() {
           <p className="text-muted-foreground">Loading transaction logs...</p>
         </div>
       ) : (
-        <DataTable columns={columns} data={transactions} searchPlaceholder="Search transactions..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchTransactions(newLimit); }} />
+        <DataTable columns={columns} data={transactions} searchPlaceholder="Search transactions..." initialPageSize={limit} onLimitChange={(newLimit) => { setLimit(newLimit); fetchTransactions(newLimit); }} />
       )}
 
       {/* --- ADD TRANSACTION MODAL --- */}

@@ -991,7 +991,7 @@ function SubscriptionsContent() {
               <p className="text-muted-foreground">Loading transaction history...</p>
             </div>
           ) : (
-            <DataTable columns={userSubColumns} data={subscriptions} searchPlaceholder="Search by ID or User..." onLimitChange={(newLimit) => { setSubLimit(newLimit); fetchSubscriptions(newLimit); }} />
+            <DataTable columns={userSubColumns} data={subscriptions} searchPlaceholder="Search by ID or User..." initialPageSize={subLimit} onLimitChange={(newLimit) => { setSubLimit(newLimit); fetchSubscriptions(newLimit); }} />
           )}
         </div>
       )}

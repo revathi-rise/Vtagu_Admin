@@ -214,7 +214,7 @@ export default function ActorsPage() {
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable columns={columns} data={actors} searchPlaceholder="Search actors by name or country..." onLimitChange={(newLimit) => { setLimit(newLimit); fetchActors(newLimit); }} />
+        <DataTable columns={columns} data={actors} searchPlaceholder="Search actors by name or country..." initialPageSize={limit} onLimitChange={(newLimit) => { setLimit(newLimit); fetchActors(newLimit); }} />
       )}
 
       {/* Add / Edit Actor Modal */}
