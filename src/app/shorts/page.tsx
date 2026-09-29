@@ -148,6 +148,22 @@ export default function ShortsPage() {
       ),
     },
     {
+      accessorKey: 'kids_restriction',
+      header: 'Kids Mode',
+      cell: ({ row }) => {
+        const val = row.original.kids_restriction as any;
+        const isKids = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <span className={cn(
+            "text-xs font-bold px-2 py-0.5 rounded inline-flex items-center gap-1",
+            isKids ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" : "text-muted-foreground bg-muted"
+          )}>
+            {isKids ? 'KIDS' : 'ALL'}
+          </span>
+        );
+      }
+    },
+    {
       accessorKey: 'is_free',
       header: 'Access',
       cell: ({ row }) => {

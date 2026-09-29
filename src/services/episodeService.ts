@@ -27,6 +27,8 @@ export interface Episode {
   is_coming_soon?: boolean;
   is_revenue_managed?: boolean;
   isRevenueManaged?: boolean;
+  kids_restriction?: boolean | number;
+  kidsRestriction?: boolean;
   is_svod_eligible?: boolean;
   revenue_share_percent?: number;
   price?: number;

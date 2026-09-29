@@ -55,6 +55,22 @@ export default function EpisodesPage() {
       ),
     },
     {
+      accessorKey: 'kids_restriction',
+      header: 'Kids Mode',
+      cell: ({ row }) => {
+        const val = (row.original.kids_restriction ?? (row.original as any).kidsRestriction) as any;
+        const isKids = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <span className={cn(
+            "text-xs font-bold px-2 py-0.5 rounded inline-flex items-center gap-1",
+            isKids ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" : "text-muted-foreground bg-muted"
+          )}>
+            {isKids ? 'KIDS' : 'ALL'}
+          </span>
+        );
+      }
+    },
+    {
       accessorKey: 'season_id',
       header: 'Season',
       cell: ({ row }) => <span className="text-sm font-medium px-2 py-1 bg-muted rounded-full">Season {row.original.season_id}</span>,

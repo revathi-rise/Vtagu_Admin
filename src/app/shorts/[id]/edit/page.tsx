@@ -41,6 +41,7 @@ const shortSchema = z.object({
   revenue_share_percent: z.any().transform((val) => Number(val) || 0),
   is_featured: z.boolean(),
   is_active: z.boolean(),
+  kids_restriction: z.boolean().optional(),
   sort_order: z.any().transform((val) => Number(val) || 0),
 });
 

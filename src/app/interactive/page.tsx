@@ -82,6 +82,7 @@ export default function InteractiveEditorPage() {
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [movieIsFree, setMovieIsFree] = useState<boolean>(true);
+  const [movieKidsRestriction, setMovieKidsRestriction] = useState<boolean>(false);
   const [moviePrice, setMoviePrice] = useState<string>('0.00');
   const [movieCurrency, setMovieCurrency] = useState<string>('INR');
   const [availableCurrencies, setAvailableCurrencies] = useState<Currency[]>([]);
@@ -1588,6 +1589,22 @@ export default function InteractiveEditorPage() {
                       <p className="text-[10px] text-muted-foreground">Percentage of calculated watch-time revenue allocated to this interactive movie.</p>
                     </div>
                   )}
+                </div>
+                {/* Kids Mode / Restrictions */}
+                <div className="border-t border-border/40 pt-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="interactiveKidsToggle"
+                      checked={movieKidsRestriction}
+                      onChange={(e) => setMovieKidsRestriction(e.target.checked)}
+                      className="rounded border-border text-amber-500 focus:ring-amber-500/20 w-4 h-4 bg-background cursor-pointer"
+                    />
+                    <label htmlFor="interactiveKidsToggle" className="text-sm font-semibold text-amber-400 cursor-pointer select-none">
+                      Kids Content (Kids Mode)
+                    </label>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pl-6">Mark this interactive movie as Kids Mode content for safe family viewing.</p>
                 </div>
               </div>
 
