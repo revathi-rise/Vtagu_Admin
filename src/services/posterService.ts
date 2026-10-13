@@ -13,6 +13,7 @@ export interface Poster {
   reference_id?: number;
   reference_type?: 'movie' | 'series' | 'interactive' | 'none';
   status: 'A' | 'I'; // 'A' for active, 'I' for inactive
+  kids_restriction?: boolean | number;
   createdon?: string;
 }
 

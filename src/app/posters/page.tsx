@@ -66,6 +66,7 @@ export default function PostersPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [status, setStatus] = useState<'A' | 'I'>('A');
+  const [kidsRestriction, setKidsRestriction] = useState(false);
 
   // UI state
   const [isUploading, setIsUploading] = useState(false);
@@ -154,6 +155,7 @@ export default function PostersPage() {
     setSelectedLanguages([]);
     setSelectedGenres([]);
     setStatus('A');
+    setKidsRestriction(false);
     setIsAddModalOpen(true);
   };
 
@@ -176,6 +178,7 @@ export default function PostersPage() {
     setSelectedGenres(genrs);
 
     setStatus(poster.status === 'A' ? 'A' : 'I');
+    setKidsRestriction(Boolean(poster.kids_restriction ?? (poster as any).kidsRestriction));
     setIsEditModalOpen(true);
   };
 
@@ -230,6 +233,7 @@ export default function PostersPage() {
         genres_list: selectedGenres.join(', '),
         page_type: pageType,
         status: status,
+        kids_restriction: kidsRestriction,
       };
 
       if (trailerUrl.trim()) payload.trailer_url = trailerUrl.trim();
@@ -373,6 +377,11 @@ export default function PostersPage() {
           {row.original.reference_type && row.original.reference_type !== 'none' && (
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
               Ref: <span className="font-mono text-white/80">{row.original.reference_type} ({row.original.reference_id})</span>
+            </span>
+          )}
+          {Boolean((row.original as any).kids_restriction ?? (row.original as any).kidsRestriction) && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
+              Kids Content
             </span>
           )}
         </div>
@@ -657,6 +666,20 @@ export default function PostersPage() {
                 </div>
               </div>
 
+                            {/* Kids Content Toggle */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <input
+                  type="checkbox"
+                  id="add-kids-restriction"
+                  checked={kidsRestriction}
+                  onChange={(e) => setKidsRestriction(e.target.checked)}
+                  className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
+                />
+                <label htmlFor="add-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
+                  Kids Content (Visible in Kids Mode)
+                </label>
+              </div>
+
               {/* Banner Path / File Upload */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground block">Poster Image Path / URL</label>
@@ -900,6 +923,20 @@ export default function PostersPage() {
                     <option value="I">Inactive (I)</option>
                   </select>
                 </div>
+              </div>
+
+                            {/* Kids Content Toggle */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
+                <input
+                  type="checkbox"
+                  id="edit-kids-restriction"
+                  checked={kidsRestriction}
+                  onChange={(e) => setKidsRestriction(e.target.checked)}
+                  className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
+                />
+                <label htmlFor="edit-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
+                  Kids Content (Visible in Kids Mode)
+                </label>
               </div>
 
               {/* Banner Path / File Upload */}
