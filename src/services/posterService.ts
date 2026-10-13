@@ -9,11 +9,12 @@ export interface Poster {
   trailer_url?: string;
   link?: string;
   languages: string;
-  page_type: 'home' | 'movies' | 'series' | 'interactive' | 'language';
+  page_type: 'home' | 'kids' | 'movies' | 'series' | 'interactive' | 'language';
   reference_id?: number;
   reference_type?: 'movie' | 'series' | 'interactive' | 'none';
   status: 'A' | 'I'; // 'A' for active, 'I' for inactive
   kids_restriction?: boolean | number;
+  kids_only?: boolean | number;
   createdon?: string;
 }
 

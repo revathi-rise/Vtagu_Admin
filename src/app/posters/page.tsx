@@ -60,13 +60,14 @@ export default function PostersPage() {
   const [path, setPath] = useState('');
   const [trailerUrl, setTrailerUrl] = useState('');
   const [link, setLink] = useState('');
-  const [pageType, setPageType] = useState<'home' | 'movies' | 'series' | 'interactive' | 'language'>('home');
+  const [pageType, setPageType] = useState<'home' | 'kids' | 'movies' | 'series' | 'interactive' | 'language'>('home');
   const [referenceType, setReferenceType] = useState<'movie' | 'series' | 'interactive' | 'none'>('none');
   const [referenceId, setReferenceId] = useState<number | undefined>(undefined);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [status, setStatus] = useState<'A' | 'I'>('A');
   const [kidsRestriction, setKidsRestriction] = useState(false);
+  const [showInNormalMode, setShowInNormalMode] = useState(true);
 
   // UI state
   const [isUploading, setIsUploading] = useState(false);
@@ -156,6 +157,7 @@ export default function PostersPage() {
     setSelectedGenres([]);
     setStatus('A');
     setKidsRestriction(false);
+    setShowInNormalMode(true);
     setIsAddModalOpen(true);
   };
 
@@ -178,7 +180,10 @@ export default function PostersPage() {
     setSelectedGenres(genrs);
 
     setStatus(poster.status === 'A' ? 'A' : 'I');
-    setKidsRestriction(Boolean(poster.kids_restriction ?? (poster as any).kidsRestriction));
+    const isKids = Boolean(poster.kids_restriction ?? (poster as any).kidsRestriction);
+    setKidsRestriction(isKids);
+    const isKidsOnly = Boolean((poster as any).kids_only ?? (poster as any).kidsOnly ?? poster.page_type === 'kids');
+    setShowInNormalMode(!isKidsOnly);
     setIsEditModalOpen(true);
   };
 
@@ -234,6 +239,7 @@ export default function PostersPage() {
         page_type: pageType,
         status: status,
         kids_restriction: kidsRestriction,
+        kids_only: kidsRestriction ? !showInNormalMode : false,
       };
 
       if (trailerUrl.trim()) payload.trailer_url = trailerUrl.trim();
@@ -275,6 +281,8 @@ export default function PostersPage() {
         genres_list: selectedGenres.join(', '),
         page_type: pageType,
         status: status,
+        kids_restriction: kidsRestriction,
+        kids_only: kidsRestriction ? !showInNormalMode : false,
         trailer_url: trailerUrl.trim() || undefined,
         link: link.trim() || undefined,
         reference_type: referenceType,
@@ -380,8 +388,13 @@ export default function PostersPage() {
             </span>
           )}
           {Boolean((row.original as any).kids_restriction ?? (row.original as any).kidsRestriction) && (
-            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
-              Kids Content
+            <span className={cn(
+              "text-[10px] font-bold px-1.5 py-0.5 rounded border w-fit",
+              (row.original as any).kids_only || row.original.page_type === 'kids'
+                ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+            )}>
+              {(row.original as any).kids_only || row.original.page_type === 'kids' ? 'Kids Only' : 'Kids & Normal'}
             </span>
           )}
         </div>
@@ -538,6 +551,7 @@ export default function PostersPage() {
           >
             <option value="">All Pages</option>
             <option value="home">Home</option>
+                    <option value="kids">Kids</option>
             <option value="movies">Movies</option>
             <option value="series">Web Series</option>
             <option value="interactive">Interactive</option>
@@ -646,6 +660,7 @@ export default function PostersPage() {
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
                   >
                     <option value="home">Home</option>
+                    <option value="kids">Kids</option>
                     <option value="movies">Movies</option>
                     <option value="series">Web Series</option>
                     <option value="interactive">Interactive</option>
@@ -666,18 +681,45 @@ export default function PostersPage() {
                 </div>
               </div>
 
-                            {/* Kids Content Toggle */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
-                <input
-                  type="checkbox"
-                  id="add-kids-restriction"
-                  checked={kidsRestriction}
-                  onChange={(e) => setKidsRestriction(e.target.checked)}
-                  className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
-                />
-                <label htmlFor="add-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
-                  Kids Content (Visible in Kids Mode)
-                </label>
+                                          {/* Kids Content Toggle & Normal Mode Option */}
+              <div className="space-y-3 p-3.5 rounded-xl bg-background border border-border">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="add-kids-restriction"
+                    checked={kidsRestriction}
+                    onChange={(e) => {
+                      setKidsRestriction(e.target.checked);
+                      if (!e.target.checked) setShowInNormalMode(true);
+                    }}
+                    className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
+                  />
+                  <label htmlFor="add-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
+                    Kids Content (Visible in Kids Mode)
+                  </label>
+                </div>
+
+                {kidsRestriction && (
+                  <div className="ml-7 pt-2.5 border-t border-border/50 flex flex-col gap-2 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="add-show-in-normal" className="text-xs font-bold text-amber-300 cursor-pointer select-none">
+                        Show to normal users also?
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="add-show-in-normal"
+                        checked={showInNormalMode}
+                        onChange={(e) => setShowInNormalMode(e.target.checked)}
+                        className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-border bg-card cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-amber-200/70">
+                      {showInNormalMode
+                        ? "Yes — Banner is visible to all users (Normal Home and Kids Mode)."
+                        : "No — Exclusive to Kids Mode (Hidden from normal users)."}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Banner Path / File Upload */}
@@ -905,6 +947,7 @@ export default function PostersPage() {
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
                   >
                     <option value="home">Home</option>
+                    <option value="kids">Kids</option>
                     <option value="movies">Movies</option>
                     <option value="series">Web Series</option>
                     <option value="interactive">Interactive</option>
@@ -925,18 +968,45 @@ export default function PostersPage() {
                 </div>
               </div>
 
-                            {/* Kids Content Toggle */}
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border">
-                <input
-                  type="checkbox"
-                  id="edit-kids-restriction"
-                  checked={kidsRestriction}
-                  onChange={(e) => setKidsRestriction(e.target.checked)}
-                  className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
-                />
-                <label htmlFor="edit-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
-                  Kids Content (Visible in Kids Mode)
-                </label>
+                                          {/* Kids Content Toggle & Normal Mode Option */}
+              <div className="space-y-3 p-3.5 rounded-xl bg-background border border-border">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="edit-kids-restriction"
+                    checked={kidsRestriction}
+                    onChange={(e) => {
+                      setKidsRestriction(e.target.checked);
+                      if (!e.target.checked) setShowInNormalMode(true);
+                    }}
+                    className="w-4 h-4 rounded text-primary focus:ring-primary border-border bg-card cursor-pointer"
+                  />
+                  <label htmlFor="edit-kids-restriction" className="text-xs font-semibold text-white cursor-pointer select-none">
+                    Kids Content (Visible in Kids Mode)
+                  </label>
+                </div>
+
+                {kidsRestriction && (
+                  <div className="ml-7 pt-2.5 border-t border-border/50 flex flex-col gap-2 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="edit-show-in-normal" className="text-xs font-bold text-amber-300 cursor-pointer select-none">
+                        Show to normal users also?
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="edit-show-in-normal"
+                        checked={showInNormalMode}
+                        onChange={(e) => setShowInNormalMode(e.target.checked)}
+                        className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-border bg-card cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-amber-200/70">
+                      {showInNormalMode
+                        ? "Yes — Banner is visible to all users (Normal Home and Kids Mode)."
+                        : "No — Exclusive to Kids Mode (Hidden from normal users)."}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Banner Path / File Upload */}
