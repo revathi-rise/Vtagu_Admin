@@ -44,6 +44,9 @@ export interface Movie {
   contentType?: string | null;
   ageRestriction?: string | null;
   kidsRestriction?: boolean;
+  kids_restriction?: boolean | number;
+  is_kids_approved?: boolean;
+  isKidsApproved?: boolean;
   duration?: string;
   languages?: string;
   viewCount?: number;

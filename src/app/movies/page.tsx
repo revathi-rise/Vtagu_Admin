@@ -156,6 +156,23 @@ export default function MoviesPage() {
       }
     },
     {
+      accessorKey: 'kids_restriction',
+      header: 'Kids Mode',
+      cell: ({ row }) => {
+        const val = (row.original.kids_restriction ?? (row.original as any).kidsRestriction ?? (row.original as any).is_kids_approved) as any;
+        const isKids = val === 1 || val === '1' || val === true || val === 'true';
+        return (
+          <div className={cn(
+            "inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded",
+            isKids ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" : "text-muted-foreground bg-muted"
+          )}>
+            {isKids ? 'KIDS' : 'ALL'}
+          </div>
+        );
+      }
+    },
+
+    {
       accessorKey: 'is_revenue_managed',
       header: 'Revenue Engine',
       cell: ({ row }) => {

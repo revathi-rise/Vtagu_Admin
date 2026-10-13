@@ -358,6 +358,14 @@ export default function SeriesPage() {
                                   </span>
                                 ) : null;
                               })()}
+                                                            {(() => {
+                                const isKids = (ep as any).kids_restriction === 1 || (ep as any).kids_restriction === '1' || (ep as any).kids_restriction === true || (ep as any).kids_restriction === 'true' || (ep as any).kidsRestriction === true;
+                                return isKids ? (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                                    Kids
+                                  </span>
+                                ) : null;
+                              })()}
                               {(() => {
                                 const freeVal = (ep.isFree ?? ep.is_free ?? ep.free) as any;
                                 return (freeVal === 1 || freeVal === '1' || freeVal === true || freeVal === 'true') ? (

@@ -775,6 +775,11 @@ export default function InteractiveEditorPage() {
                             SVOD PRO-RATA
                           </span>
                         ) : null}
+                        {Boolean(activeMovie.kids_restriction) ? (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            Kids Approved
+                          </span>
+                        ) : null}
                       </>
                     );
                   })()}

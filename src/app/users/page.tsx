@@ -99,6 +99,21 @@ export default function UsersPage() {
         </div>
       )
     },
+        {
+      accessorKey: 'is_kids_mode',
+      header: 'Kids Mode',
+      cell: ({ row }) => {
+        const isKids = Boolean(row.original.is_kids_mode);
+        return (
+          <span className={cn(
+            "text-xs font-bold px-2 py-0.5 rounded-full uppercase",
+            isKids ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-muted text-muted-foreground"
+          )}>
+            {isKids ? 'Kids ON' : 'Off'}
+          </span>
+        );
+      }
+    },
     {
       accessorKey: 'plan',
       header: ({ column }) => (
