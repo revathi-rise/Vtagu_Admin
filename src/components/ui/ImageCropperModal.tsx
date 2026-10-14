@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import getCroppedImg, { Area } from '@/utils/cropImage'
 import { X, Check, Loader2 } from 'lucide-react'

@@ -1,3 +1,4 @@
+'use client';
 
 function encodeEmojiEntities(str?: string): string {
   if (!str) return '';
@@ -10,7 +11,6 @@ function encodeEmojiEntities(str?: string): string {
   });
   return cleaned.trim();
 }
-'use client';
 
 import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';

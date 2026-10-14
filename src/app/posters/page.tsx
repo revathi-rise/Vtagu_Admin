@@ -1,3 +1,4 @@
+'use client';
 
 function encodeEmojiEntities(str?: string): string {
   if (!str) return '';
@@ -20,7 +21,6 @@ function decodeEmojiEntities(str?: string): string {
       try { return String.fromCodePoint(parseInt(hex, 16)); } catch (e) { return ''; }
     });
 }
-'use client';
 
 import React, { useEffect, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
