@@ -54,7 +54,7 @@ export default function MoviesPage() {
       header: 'Movie',
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-14 bg-muted rounded overflow-hidden relative group">
+          <div className="w-10 h-14 shrink-0 bg-muted rounded-lg overflow-hidden relative group border border-border/50 shadow-sm">
             <img 
               src={row.original.media?.image?.url || 'https://via.placeholder.com/150'} 
               alt={row.original.movie_name}
@@ -64,8 +64,8 @@ export default function MoviesPage() {
               <Film className="w-4 h-4 text-white" />
             </div>
           </div>
-          <div>
-            <div className="font-semibold text-sm">{row.original.title || row.original.movie_name}</div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-sm line-clamp-2" title={row.original.title || row.original.movie_name}>{row.original.title || row.original.movie_name}</div>
             <div className="text-xs text-muted-foreground">{row.original.releaseYear || row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
           </div>
         </div>
@@ -161,12 +161,15 @@ export default function MoviesPage() {
       cell: ({ row }) => {
         const val = (row.original.kids_restriction ?? (row.original as any).kidsRestriction ?? (row.original as any).is_kids_approved) as any;
         const isKids = val === 1 || val === '1' || val === true || val === 'true';
+        const isKidsOnly = Boolean((row.original as any).kids_only ?? (row.original as any).kidsOnly);
         return (
           <div className={cn(
             "inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded",
-            isKids ? "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20" : "text-muted-foreground bg-muted"
+            isKids 
+              ? (isKidsOnly ? "text-amber-400 bg-amber-400/10 border border-amber-400/20" : "text-emerald-400 bg-emerald-400/10 border border-emerald-400/20") 
+              : "text-muted-foreground bg-muted"
           )}>
-            {isKids ? 'KIDS' : 'ALL'}
+            {isKids ? (isKidsOnly ? 'KIDS ONLY' : 'KIDS & NORMAL') : 'ALL'}
           </div>
         );
       }

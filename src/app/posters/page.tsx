@@ -1,3 +1,25 @@
+
+function encodeEmojiEntities(str?: string): string {
+  if (!str) return '';
+  let cleaned = str.replace(/<!--[\s\S]*?-->/g, '');
+  cleaned = cleaned.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, (char) => {
+    const cp = char.codePointAt(0);
+    return cp ? `&#${cp};` : char;
+  });
+  return cleaned.trim();
+}
+
+function decodeEmojiEntities(str?: string): string {
+  if (!str) return '';
+  return str
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/&#(\d+);/g, (_, dec) => {
+      try { return String.fromCodePoint(Number(dec)); } catch (e) { return ''; }
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
+      try { return String.fromCodePoint(parseInt(hex, 16)); } catch (e) { return ''; }
+    });
+}
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -11,6 +33,7 @@ import { interactiveMovieService, InteractiveMovie } from '@/services/interactiv
 import apiClient from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import { 
   Loader2, 
   AlertCircle, 
@@ -164,7 +187,7 @@ export default function PostersPage() {
   const handleOpenEditModal = (poster: Poster) => {
     setEditingPoster(poster);
     setPosterTitle(poster.poster_title || '');
-    setDescription(poster.description || '');
+    setDescription(decodeEmojiEntities(poster.description || ''));
     setPath(poster.path || '');
     setTrailerUrl(poster.trailer_url || '');
     setLink(poster.link || '');
@@ -180,9 +203,9 @@ export default function PostersPage() {
     setSelectedGenres(genrs);
 
     setStatus(poster.status === 'A' ? 'A' : 'I');
-    const isKids = Boolean(poster.kids_restriction ?? (poster as any).kidsRestriction);
+    const isKids = Boolean(poster.kids_restriction ?? (poster as any).kidsRestriction ?? poster.page_type === 'kids');
     setKidsRestriction(isKids);
-    const isKidsOnly = Boolean((poster as any).kids_only ?? (poster as any).kidsOnly ?? poster.page_type === 'kids');
+    const isKidsOnly = Boolean((poster as any).kids_only ?? (poster as any).kidsOnly);
     setShowInNormalMode(!isKidsOnly);
     setIsEditModalOpen(true);
   };
@@ -363,16 +386,19 @@ export default function PostersPage() {
     {
       accessorKey: 'poster_title',
       header: 'Poster Details',
-      cell: ({ row }) => (
-        <div className="max-w-[280px]">
-          <div className="font-semibold text-white truncate" title={row.original.poster_title}>
-            {row.original.poster_title}
+      cell: ({ row }) => {
+        const cleanDesc = (row.original.description || '').replace(/<[^>]*>/g, '').trim();
+        return (
+          <div className="max-w-[280px]">
+            <div className="font-semibold text-white truncate" title={row.original.poster_title}>
+              {row.original.poster_title}
+            </div>
+            <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5" title={cleanDesc}>
+              {cleanDesc || 'No description'}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5" title={row.original.description}>
-            {row.original.description || 'No description'}
-          </div>
-        </div>
-      )
+        );
+      }
     },
     {
       accessorKey: 'page_type',
@@ -387,14 +413,14 @@ export default function PostersPage() {
               Ref: <span className="font-mono text-white/80">{row.original.reference_type} ({row.original.reference_id})</span>
             </span>
           )}
-          {Boolean((row.original as any).kids_restriction ?? (row.original as any).kidsRestriction) && (
+          {Boolean((row.original as any).kids_restriction ?? (row.original as any).kidsRestriction ?? row.original.page_type === 'kids') && (
             <span className={cn(
               "text-[10px] font-bold px-1.5 py-0.5 rounded border w-fit",
-              (row.original as any).kids_only || row.original.page_type === 'kids'
+              Boolean((row.original as any).kids_only ?? (row.original as any).kidsOnly)
                 ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                 : "bg-amber-500/10 text-amber-400 border-amber-500/20"
             )}>
-              {(row.original as any).kids_only || row.original.page_type === 'kids' ? 'Kids Only' : 'Kids & Normal'}
+              {Boolean((row.original as any).kids_only ?? (row.original as any).kidsOnly) ? 'Kids Only' : 'Kids & Normal'}
             </span>
           )}
         </div>
@@ -641,12 +667,10 @@ export default function PostersPage() {
               {/* Description */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Description</label>
-                <textarea 
+                <RichTextEditor 
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(val) => setDescription(val)}
                   placeholder="Brief description of the banner content..."
-                  rows={3}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white resize-none"
                 />
               </div>
 
@@ -656,7 +680,13 @@ export default function PostersPage() {
                   <label className="text-xs font-semibold text-muted-foreground">Page Placement</label>
                   <select
                     value={pageType}
-                    onChange={(e) => setPageType(e.target.value as any)}
+                    onChange={(e) => {
+                      const val = e.target.value as any;
+                      setPageType(val);
+                      if (val === 'kids') {
+                        setKidsRestriction(true);
+                      }
+                    }}
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
                   >
                     <option value="home">Home</option>
@@ -928,12 +958,10 @@ export default function PostersPage() {
               {/* Description */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">Description</label>
-                <textarea 
+                <RichTextEditor 
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(val) => setDescription(val)}
                   placeholder="Brief description of the banner content..."
-                  rows={3}
-                  className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white resize-none"
                 />
               </div>
 
@@ -943,7 +971,13 @@ export default function PostersPage() {
                   <label className="text-xs font-semibold text-muted-foreground">Page Placement</label>
                   <select
                     value={pageType}
-                    onChange={(e) => setPageType(e.target.value as any)}
+                    onChange={(e) => {
+                      const val = e.target.value as any;
+                      setPageType(val);
+                      if (val === 'kids') {
+                        setKidsRestriction(true);
+                      }
+                    }}
                     className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
                   >
                     <option value="home">Home</option>

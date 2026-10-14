@@ -47,6 +47,8 @@ export interface Movie {
   kids_restriction?: boolean | number;
   is_kids_approved?: boolean;
   isKidsApproved?: boolean;
+  kids_only?: boolean | number;
+  kidsOnly?: boolean | number;
   duration?: string;
   languages?: string;
   viewCount?: number;
@@ -98,6 +100,8 @@ export interface MoviePayload {
   isFree?: boolean;
   age_restriction?: string;
   kids_restriction?: boolean;
+  kids_only?: boolean;
+  kidsOnly?: boolean;
   is_interactive?: boolean;
   is_coming_soon?: boolean;
   is_revenue_managed?: boolean;

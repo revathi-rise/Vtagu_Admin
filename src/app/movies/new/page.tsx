@@ -1,3 +1,15 @@
+
+function encodeEmojiEntities(str?: string): string {
+  if (!str) return '';
+  // 1. Remove Windows paste comments
+  let cleaned = str.replace(/<!--[\s\S]*?-->/g, '');
+  // 2. Encode 4-byte astral characters (emojis) as HTML entities so MySQL never corrupts them to ??
+  cleaned = cleaned.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, (char) => {
+    const cp = char.codePointAt(0);
+    return cp ? `&#${cp};` : char;
+  });
+  return cleaned.trim();
+}
 'use client';
 
 import React from 'react';
@@ -48,6 +60,7 @@ const movieSchema = z.object({
   is_coming_soon: z.boolean().optional(),
   is_revenue_managed: z.boolean().optional(),
   kids_restriction: z.boolean().optional(),
+  kids_only: z.boolean().optional(),
   movie_type: z.string().optional(),
   languages: z.string().optional(),
   director: z.string().min(1, 'Director is required'),
@@ -135,6 +148,7 @@ const slugify = (text: string) => {
 };
 
 export default function NewMoviePage() {
+  const [showInNormalMode, setShowInNormalMode] = React.useState<boolean>(true);
   const router = useRouter();
   const [isUploading, setIsUploading] = React.useState(false);
   const { 
@@ -261,9 +275,9 @@ export default function NewMoviePage() {
         title: data.title,
         movie_name: data.title,
         slug: data.slug,
-        description_short: data.description_short,
-        description_long: data.description_long,
-        movie_desc: data.description_short,
+        description_short: encodeEmojiEntities(data.description_short),
+        description_long: encodeEmojiEntities(data.description_long),
+        movie_desc: encodeEmojiEntities(data.description_short),
         year: data.year,
         duration: data.duration,
         rating: data.rating,
@@ -277,6 +291,7 @@ export default function NewMoviePage() {
         is_interactive: data.is_interactive,
         is_coming_soon: data.is_coming_soon,
         kids_restriction: data.kids_restriction,
+        kids_only: data.kids_restriction ? !showInNormalMode : false,
         is_revenue_managed: data.is_revenue_managed,
         isRevenueManaged: data.is_revenue_managed,
         is_revenue_shared: data.is_revenue_managed,
@@ -891,12 +906,42 @@ export default function NewMoviePage() {
             <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-amber-400">Kids Content (Kids Mode)</label>
-                <input type="checkbox" {...register('kids_restriction')} className="w-5 h-5 rounded border-border accent-amber-500 cursor-pointer" />
+                <input 
+                  type="checkbox" 
+                  {...register('kids_restriction')} 
+                  onChange={(e) => {
+                    register('kids_restriction').onChange(e);
+                    if (!e.target.checked) setShowInNormalMode(true);
+                  }}
+                  className="w-5 h-5 rounded border-border accent-amber-500 cursor-pointer" 
+                />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="text-foreground/80 font-medium">☑ Checked:</span> Visible in Kids Mode / Restricted for Kids profile.<br/>
-                <span className="text-foreground/80 font-medium">☐ Unchecked:</span> Adult / General Content.
+                <span className="text-foreground/80 font-medium">&#x2611; Checked:</span> Visible in Kids Mode / Restricted for Kids profile.<br/>
+                <span className="text-foreground/80 font-medium">&#x2610; Unchecked:</span> Adult / General Content.
               </p>
+
+              {watch('kids_restriction') && (
+                <div className="ml-4 pl-3.5 border-l-2 border-amber-500/40 flex flex-col gap-2 pt-2 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="new-show-in-normal" className="text-xs font-bold text-amber-300 cursor-pointer select-none">
+                      Show to normal users also?
+                    </label>
+                    <input
+                      type="checkbox"
+                      id="new-show-in-normal"
+                      checked={showInNormalMode}
+                      onChange={(e) => setShowInNormalMode(e.target.checked)}
+                      className="w-4 h-4 rounded text-amber-500 focus:ring-amber-500 border-border bg-card cursor-pointer"
+                    />
+                  </div>
+                  <p className="text-[11px] text-amber-200/70">
+                    {showInNormalMode
+                      ? "Yes — Movie is visible to all users (Normal Catalog/Home and Kids Mode)."
+                      : "No — Exclusive to Kids Mode (Hidden from normal users)."}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-1.5 border-t border-border/50 pt-3 my-1">
               <div className="flex items-center justify-between">
