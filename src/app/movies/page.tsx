@@ -66,7 +66,24 @@ export default function MoviesPage() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-semibold text-sm line-clamp-2" title={row.original.title || row.original.movie_name}>{row.original.title || row.original.movie_name}</div>
-            <div className="text-xs text-muted-foreground">{row.original.releaseYear || row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}</div>
+            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span className="text-xs text-muted-foreground">
+                {row.original.releaseYear || row.original.release_date?.split('-')[0] || 'N/A'} • {row.original.duration}
+              </span>
+              {(row.original.certificate?.code || row.original.ageRestriction) && (
+                <span
+                  className="px-1.5 py-0.2 rounded text-[10px] font-black tracking-wide border uppercase"
+                  style={{
+                    backgroundColor: `${row.original.certificate?.badge_color || '#10B981'}1A`,
+                    borderColor: `${row.original.certificate?.badge_color || '#10B981'}55`,
+                    color: row.original.certificate?.badge_color || '#10B981',
+                  }}
+                  title={row.original.certificate?.name || `Certificate: ${row.original.ageRestriction}`}
+                >
+                  {row.original.certificate?.code || row.original.ageRestriction}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       ),

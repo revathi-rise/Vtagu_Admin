@@ -43,6 +43,18 @@ export interface Movie {
   movieType?: string | null;
   contentType?: string | null;
   ageRestriction?: string | null;
+  certificate_id?: number | null;
+  certificateId?: number | null;
+  certificate?: {
+    id: number;
+    code: string;
+    name: string;
+    certification_system: string;
+    country: string;
+    maturity_level?: string;
+    badge_color?: string;
+    description?: string;
+  } | null;
   kidsRestriction?: boolean;
   kids_restriction?: boolean | number;
   is_kids_approved?: boolean;
@@ -99,6 +111,8 @@ export interface MoviePayload {
   free?: boolean;
   isFree?: boolean;
   age_restriction?: string;
+  certificate_id?: number | null;
+  certificateId?: number | null;
   kids_restriction?: boolean;
   kids_only?: boolean;
   kidsOnly?: boolean;

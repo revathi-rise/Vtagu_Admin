@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
 import { languageService, Language } from '@/services/languageService';
 import { genreService, Genre } from '@/services/genreService';
+import { certificateService, Certificate } from '@/services/certificateService';
 import { RichTextEditor } from '@/components/ui/RichTextEditor';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
 
@@ -67,6 +68,7 @@ const movieSchema = z.object({
   actors: z.string().min(1, 'Actors are required'),
   genre_id: z.string().optional(),
   country_id: z.number().optional(),
+  certificate_id: z.number().nullable().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
@@ -175,6 +177,7 @@ export default function NewMoviePage() {
       actors: '',
       genre_id: '',
       country_id: 1,
+      certificate_id: null,
       card_image: '',
       subtitles: [],
     }
@@ -202,6 +205,7 @@ export default function NewMoviePage() {
   const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>([]);
   const [availableGenres, setAvailableGenres] = React.useState<Genre[]>([]);
   const [selectedGenres, setSelectedGenres] = React.useState<string[]>([]);
+  const [availableCertificates, setAvailableCertificates] = React.useState<Certificate[]>([]);
 
   React.useEffect(() => {
     const fetchLanguages = async () => {
@@ -220,8 +224,17 @@ export default function NewMoviePage() {
         console.error('Failed to fetch genres:', error);
       }
     };
+    const fetchCertificates = async () => {
+      try {
+        const certs = await certificateService.getActive();
+        setAvailableCertificates(certs || []);
+      } catch (error) {
+        console.error('Failed to fetch certificates:', error);
+      }
+    };
     fetchLanguages();
     fetchGenres();
+    fetchCertificates();
   }, []);
 
   const [cropModalData, setCropModalData] = React.useState<{ file: File, field: 'movie_image' | 'card_image', aspectRatio: number } | null>(null);
@@ -281,6 +294,8 @@ export default function NewMoviePage() {
         year: data.year,
         duration: data.duration,
         rating: data.rating,
+        certificate_id: data.certificate_id ? Number(data.certificate_id) : null,
+        age_restriction: data.certificate_id ? availableCertificates.find(c => c.id === Number(data.certificate_id))?.code : undefined,
         genre_id: data.genre_id,
         country_id: data.country_id || 1,
         actors: data.actors,
@@ -779,6 +794,26 @@ export default function NewMoviePage() {
                 )}
               />
               {errors.rating && <p className="text-xs text-destructive mt-1.5">{errors.rating.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground/90">
+                CBFC / Film Certificate
+              </label>
+              <select
+                {...register('certificate_id', {
+                  setValueAs: (v) => (v === '' || v === null || v === undefined ? null : Number(v))
+                })}
+                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+              >
+                <option value="">No Certificate / Not Rated</option>
+                {availableCertificates.map((cert) => (
+                  <option key={cert.id} value={cert.id}>
+                    {cert.code} - {cert.name} ({cert.certification_system})
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-1">Official CBFC or board certification displayed on movie badges.</p>
             </div>
 
             <div>

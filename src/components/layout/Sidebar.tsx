@@ -24,7 +24,8 @@ import {
   Coins,
   Image,
   Video,
-  ShieldAlert
+  ShieldAlert,
+  Award
 } from 'lucide-react';
 
 
@@ -39,6 +40,7 @@ const menuItems = [
   { icon: Users2, label: 'Actors', href: '/actors' },
   { icon: Tag, label: 'Genres', href: '/genres' },
   { icon: Globe, label: 'Languages', href: '/languages' },
+  { icon: Award, label: 'Certificates', href: '/certificates' },
   { icon: Coins, label: 'Currencies', href: '/currencies' },
   { icon: GitBranch, label: 'Interactive', href: '/interactive' },
   { icon: CreditCard, label: 'Subscriptions', href: '/subscriptions?tab=plans' },

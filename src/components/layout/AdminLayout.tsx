@@ -20,6 +20,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     '/actors': 'Actors',
     '/genres': 'Genres',
     '/languages': 'Languages',
+    '/certificates': 'Certificates',
     '/currencies': 'Currencies',
     '/interactive': 'Interactive',
     '/subscriptions': 'Subscriptions',
