@@ -15,6 +15,16 @@ export interface Poster {
   status: 'A' | 'I'; // 'A' for active, 'I' for inactive
   kids_restriction?: boolean | number;
   kids_only?: boolean | number;
+  certificate_id?: number | null;
+  certificateId?: number | null;
+  certificate?: {
+    id: number;
+    code: string;
+    name: string;
+    certification_system: string;
+    maturity_level?: string;
+    badge_color?: string;
+  } | null;
   createdon?: string;
 }
 

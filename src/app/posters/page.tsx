@@ -26,6 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/DataTable';
 import { posterService, Poster } from '@/services/posterService';
+import { certificateService, Certificate } from '@/services/certificateService';
 import { languageService, Language } from '@/services/languageService';
 import { genreService, Genre } from '@/services/genreService';
 import { movieService, Movie } from '@/services/movieService';
@@ -71,6 +72,8 @@ export default function PostersPage() {
   const [availableGenres, setAvailableGenres] = useState<Genre[]>([]);
   const [availableMovies, setAvailableMovies] = useState<Movie[]>([]);
   const [availableInteractiveMovies, setAvailableInteractiveMovies] = useState<InteractiveMovie[]>([]);
+  const [certificateId, setCertificateId] = useState<number | null>(null);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -262,6 +265,7 @@ export default function PostersPage() {
         page_type: pageType,
         status: status,
         kids_restriction: kidsRestriction,
+      certificate_id: certificateId ? Number(certificateId) : null,
         kids_only: kidsRestriction ? !showInNormalMode : false,
       };
 
@@ -711,7 +715,26 @@ export default function PostersPage() {
                 </div>
               </div>
 
-                                          {/* Kids Content Toggle & Normal Mode Option */}
+                                          <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                    <span>Age / CBFC Certificate</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">Auto-inherits from linked movie if unset</span>
+                  </label>
+                  <select
+                    value={certificateId || ''}
+                    onChange={(e) => setCertificateId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                  >
+                    <option value="">Auto / Inherit from Linked Content</option>
+                    {certificates.map((cert) => (
+                      <option key={cert.id} value={cert.id}>
+                        {cert.code} - {cert.name} ({cert.certification_system})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Kids Content Toggle & Normal Mode Option */}
               <div className="space-y-3 p-3.5 rounded-xl bg-background border border-border">
                 <div className="flex items-center gap-3">
                   <input
@@ -1002,7 +1025,26 @@ export default function PostersPage() {
                 </div>
               </div>
 
-                                          {/* Kids Content Toggle & Normal Mode Option */}
+                                          <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground flex items-center justify-between">
+                    <span>Age / CBFC Certificate</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">Auto-inherits from linked movie if unset</span>
+                  </label>
+                  <select
+                    value={certificateId || ''}
+                    onChange={(e) => setCertificateId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+                  >
+                    <option value="">Auto / Inherit from Linked Content</option>
+                    {certificates.map((cert) => (
+                      <option key={cert.id} value={cert.id}>
+                        {cert.code} - {cert.name} ({cert.certification_system})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Kids Content Toggle & Normal Mode Option */}
               <div className="space-y-3 p-3.5 rounded-xl bg-background border border-border">
                 <div className="flex items-center gap-3">
                   <input

@@ -15,6 +15,18 @@ export interface InteractiveMovie {
   currency?: string;
   is_revenue_managed?: number | boolean;
   isRevenueManaged?: number | boolean;
+  certificate_id?: number | null;
+  certificateId?: number | null;
+  quality?: string | null;
+  play_quality?: string | null;
+  certificate?: {
+    id: number;
+    code: string;
+    name: string;
+    certification_system: string;
+    maturity_level?: string;
+    badge_color?: string;
+  } | null;
   is_svod_eligible?: number;
   revenue_share_percent?: number;
 }

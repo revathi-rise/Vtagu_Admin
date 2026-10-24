@@ -69,6 +69,7 @@ const movieSchema = z.object({
   genre_id: z.string().optional(),
   country_id: z.number().optional(),
   certificate_id: z.number().nullable().optional(),
+  quality: z.string().optional(),
   subtitles: z.array(z.object({
     language: z.string().min(1, 'Code required'),
     label: z.string().min(1, 'Label required'),
@@ -178,6 +179,7 @@ export default function NewMoviePage() {
       genre_id: '',
       country_id: 1,
       certificate_id: null,
+      quality: '',
       card_image: '',
       subtitles: [],
     }
@@ -295,6 +297,7 @@ export default function NewMoviePage() {
         duration: data.duration,
         rating: data.rating,
         certificate_id: data.certificate_id ? Number(data.certificate_id) : null,
+        quality: data.quality ? data.quality.trim() : null,
         age_restriction: data.certificate_id ? availableCertificates.find(c => c.id === Number(data.certificate_id))?.code : undefined,
         genre_id: data.genre_id,
         country_id: data.country_id || 1,
@@ -814,6 +817,31 @@ export default function NewMoviePage() {
                 ))}
               </select>
               <p className="text-[11px] text-muted-foreground mt-1">Official CBFC or board certification displayed on movie badges.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-foreground/90">
+                Play / Video Quality
+              </label>
+              <input
+                type="text"
+                list="movie-quality-presets"
+                placeholder="e.g. HD, 1080P FULL HD, 4K ULTRA HD (Optional)"
+                {...register('quality')}
+                className="w-full bg-muted/50 border border-border rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 ring-primary/20 text-white"
+              />
+              <datalist id="movie-quality-presets">
+                <option value="4K ULTRA HD" />
+                <option value="4K HDR" />
+                <option value="4K Dolby Vision" />
+                <option value="1080P FULL HD" />
+                <option value="720P HD" />
+                <option value="2K QHD" />
+                <option value="8K ULTRA HD" />
+                <option value="HD" />
+                <option value="SD" />
+              </datalist>
+              <p className="text-[11px] text-muted-foreground mt-1">Play quality badge displayed on movie details and video stream.</p>
             </div>
 
             <div>

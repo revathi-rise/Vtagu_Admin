@@ -45,6 +45,8 @@ export interface Movie {
   ageRestriction?: string | null;
   certificate_id?: number | null;
   certificateId?: number | null;
+  quality?: string | null;
+  play_quality?: string | null;
   certificate?: {
     id: number;
     code: string;
@@ -113,6 +115,8 @@ export interface MoviePayload {
   age_restriction?: string;
   certificate_id?: number | null;
   certificateId?: number | null;
+  quality?: string | null;
+  play_quality?: string | null;
   kids_restriction?: boolean;
   kids_only?: boolean;
   kidsOnly?: boolean;

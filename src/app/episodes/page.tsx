@@ -49,7 +49,19 @@ export default function EpisodesPage() {
           </div>
           <div>
             <div className="font-semibold text-sm">{row.original.title}</div>
-            <div className="text-xs text-muted-foreground">Ep {row.original.episode_number} • {row.original.duration || 'N/A'}</div>
+            <div className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap mt-0.5">
+              <span>Ep {row.original.episode_number} • {row.original.duration || 'N/A'}</span>
+              {(row.original as any).certificate?.code && (
+                <span className="text-[9px] font-black px-1.5 py-0.2 rounded border border-amber-400/30 bg-amber-400/10 text-amber-400 uppercase">
+                  {(row.original as any).certificate.code}
+                </span>
+              )}
+              {Boolean((row.original as any).quality) && (
+                <span className="text-[9px] font-black px-1.5 py-0.2 rounded border border-cyan-400/30 bg-cyan-400/10 text-cyan-400 uppercase">
+                  {(row.original as any).quality}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       ),

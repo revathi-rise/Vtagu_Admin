@@ -25,6 +25,7 @@ import {
 import { cn } from '@/lib/utils';
 import { sceneService, Scene, Choice } from '@/services/sceneService';
 import { interactiveMovieService, InteractiveMovie } from '@/services/interactiveMovieService';
+import { certificateService, Certificate } from '@/services/certificateService';
 import { languageService, Language } from '@/services/languageService';
 import { currencyService, Currency } from '@/services/currencyService';
 import ImageCropperModal from '@/components/ui/ImageCropperModal';
@@ -32,6 +33,9 @@ import apiClient from '@/lib/api-client';
 
 export default function InteractiveEditorPage() {
   const [movies, setMovies] = useState<InteractiveMovie[]>([]);
+  const [movieCertificateId, setMovieCertificateId] = useState<number | null>(null);
+  const [movieQuality, setMovieQuality] = useState<string>("");
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
   const [manualMovieId, setManualMovieId] = useState<string>('');
   const [useManualId, setUseManualId] = useState(false);
@@ -217,6 +221,8 @@ export default function InteractiveEditorPage() {
     setSelectedLanguages([]);
     setMovieIsFree(true);
     setMovieKidsRestriction(false);
+    setMovieCertificateId(null);
+    setMovieQuality("");
     setMoviePrice('0.00');
     setMovieCurrency('INR');
     setIsRevenueManaged(false);
@@ -236,6 +242,8 @@ export default function InteractiveEditorPage() {
     setSelectedLanguages(movie.languages ? movie.languages.split(',').map(l => l.trim()).filter(Boolean) : []);
     setMovieIsFree(movie.is_free !== 0);
     setMovieKidsRestriction(movie.kids_restriction === 1 || movie.kids_restriction === true);
+    setMovieCertificateId(movie.certificate_id ?? (movie as any).certificateId ?? null);
+    setMovieQuality((movie as any).quality || "");
     setMoviePrice(movie.price !== undefined ? movie.price.toString() : '0.00');
     setMovieCurrency(movie.currency || 'INR');
     const revManaged = (movie.isRevenueManaged ?? movie.is_revenue_managed) as any;
@@ -259,6 +267,8 @@ export default function InteractiveEditorPage() {
         languages: selectedLanguages.join(', '),
         is_free: movieIsFree ? 1 : 0,
         kids_restriction: movieKidsRestriction ? 1 : 0,
+      certificate_id: movieCertificateId ? Number(movieCertificateId) : null,
+      quality: movieQuality ? movieQuality.trim() : null,
         price: movieIsFree ? 0 : Number(moviePrice) || 0,
         currency: movieCurrency,
         is_revenue_managed: isRevenueManaged ? 1 : 0,
@@ -780,6 +790,22 @@ export default function InteractiveEditorPage() {
                             Kids Approved
                           </span>
                         ) : null}
+                        {(() => {
+                          const cert = activeMovie.certificate || certificates.find(c => c.id === activeMovie.certificate_id);
+                          if (!cert?.code) return null;
+                          return (
+                            <span 
+                              style={{ 
+                                backgroundColor: `${cert.badge_color || '#10B981'}20`, 
+                                color: cert.badge_color || '#10B981', 
+                                borderColor: `${cert.badge_color || '#10B981'}40` 
+                              }}
+                              className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider border"
+                            >
+                              {cert.code}
+                            </span>
+                          );
+                        })()}
                       </>
                     );
                   })()}
@@ -1493,6 +1519,50 @@ export default function InteractiveEditorPage() {
                       className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
                     />
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center justify-between">
+                    <span>Play / Video Quality</span>
+                          </label>
+                          <input
+                            type="text"
+                            list="interactive-quality-presets"
+                            value={movieQuality}
+                            onChange={(e) => setMovieQuality(e.target.value)}
+                            placeholder="e.g. HD, 1080P FULL HD, 4K ULTRA HD (Optional)"
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-white"
+                          />
+                          <datalist id="interactive-quality-presets">
+                            <option value="4K ULTRA HD" />
+                            <option value="4K HDR" />
+                            <option value="4K Dolby Vision" />
+                            <option value="1080P FULL HD" />
+                            <option value="720P HD" />
+                            <option value="2K QHD" />
+                            <option value="8K ULTRA HD" />
+                            <option value="HD" />
+                            <option value="SD" />
+                          </datalist>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+                            <span>Age / CBFC Certificate</span>
+                    <span className="text-[11px] text-muted-foreground font-normal">Optional</span>
+                  </label>
+                  <select
+                    value={movieCertificateId || ''}
+                    onChange={(e) => setMovieCertificateId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  >
+                    <option value="">No Certificate / Not Rated</option>
+                    {certificates.map((cert) => (
+                      <option key={cert.id} value={cert.id}>
+                        {cert.code} - {cert.name} ({cert.certification_system})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Interactive Payment Configuration */}

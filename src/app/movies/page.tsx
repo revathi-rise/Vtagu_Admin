@@ -83,6 +83,11 @@ export default function MoviesPage() {
                   {row.original.certificate?.code || row.original.ageRestriction}
                 </span>
               )}
+              {Boolean((row.original as any).quality || (row.original as any).play_quality) && (
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 uppercase tracking-wider">
+                  {(row.original as any).quality || (row.original as any).play_quality}
+                </span>
+              )}
             </div>
           </div>
         </div>

@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { episodeService, EpisodePayload } from '@/services/episodeService';
+import { certificateService, Certificate } from '@/services/certificateService';
 import { languageService, Language } from '@/services/languageService';
 import apiClient from '@/lib/api-client';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,8 @@ const schema = z.object({
   poster_image: z.string().optional(),
   card_image: z.string().optional(),
   poster_alt: z.string().optional(),
+  certificate_id: z.number().nullable().optional(),
+  quality: z.string().optional(),
   rating: z.number().min(0).max(10),
   featured: z.boolean(),
   free: z.boolean(),
@@ -84,6 +87,10 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 }
 
 export default function NewEpisodePage() {
+  const [certificates, setCertificates] = React.useState<Certificate[]>([]);
+  React.useEffect(() => {
+    certificateService.getActive().then(setCertificates).catch(console.error);
+  }, []);
   const router = useRouter();
   const searchParams = useSearchParams();
   const defaultSeasonId = Number(searchParams.get('season_id') || '');
@@ -104,6 +111,8 @@ export default function NewEpisodePage() {
     defaultValues: {
       season_id: defaultSeasonId || undefined,
       episode_number: 1,
+      certificate_id: null,
+      quality: '',
       rating: 0,
       featured: false,
       free: false,
@@ -190,6 +199,8 @@ export default function NewEpisodePage() {
         duration: data.duration,
         url: data.url,
         rating: data.rating,
+        certificate_id: data.certificate_id ? Number(data.certificate_id) : undefined,
+        quality: data.quality ? data.quality.trim() : undefined,
         featured: data.featured,
         free: data.free,
         is_coming_soon: data.is_coming_soon,
@@ -589,6 +600,25 @@ export default function NewEpisodePage() {
                     {...register('rating', { valueAsNumber: true })}
                     className={inputCls(!!errors.rating)}
                   />
+                </Field>
+              </div>
+
+              {/* Certificate Selection */}
+              <div>
+                <Field label="CBFC / Age Certificate (Optional)" error={errors.certificate_id?.message}>
+                  <select
+                    {...register('certificate_id', {
+                      setValueAs: (v) => (v === '' || v === undefined || v === null ? null : Number(v)),
+                    })}
+                    className={inputCls(!!errors.certificate_id)}
+                  >
+                    <option value="">No Certificate / Inherit</option>
+                    {certificates.map((cert) => (
+                      <option key={cert.id} value={cert.id}>
+                        {cert.code} - {cert.name} ({cert.certification_system})
+                      </option>
+                    ))}
+                  </select>
                 </Field>
               </div>
 
