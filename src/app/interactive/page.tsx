@@ -35,6 +35,12 @@ export default function InteractiveEditorPage() {
   const [movies, setMovies] = useState<InteractiveMovie[]>([]);
   const [movieCertificateId, setMovieCertificateId] = useState<number | null>(null);
   const [movieQuality, setMovieQuality] = useState<string>("");
+  const [movieDirector, setMovieDirector] = useState<string>("");
+  const [movieActors, setMovieActors] = useState<string>("");
+  const [movieDuration, setMovieDuration] = useState<string>("");
+  const [movieYear, setMovieYear] = useState<string>("");
+  const [movieGenres, setMovieGenres] = useState<string>("");
+  const [movieTotalEndings, setMovieTotalEndings] = useState<number>(5);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [selectedMovieId, setSelectedMovieId] = useState<number | null>(null);
   const [manualMovieId, setManualMovieId] = useState<string>('');
@@ -223,6 +229,12 @@ export default function InteractiveEditorPage() {
     setMovieKidsRestriction(false);
     setMovieCertificateId(null);
     setMovieQuality("");
+    setMovieDirector("");
+    setMovieActors("");
+    setMovieDuration("");
+    setMovieYear("");
+    setMovieGenres("");
+    setMovieTotalEndings(5);
     setMoviePrice('0.00');
     setMovieCurrency('INR');
     setIsRevenueManaged(false);
@@ -244,6 +256,12 @@ export default function InteractiveEditorPage() {
     setMovieKidsRestriction(movie.kids_restriction === 1 || movie.kids_restriction === true);
     setMovieCertificateId(movie.certificate_id ?? (movie as any).certificateId ?? null);
     setMovieQuality((movie as any).quality || "");
+    setMovieDirector((movie as any).director || "");
+    setMovieActors((movie as any).actors || "");
+    setMovieDuration((movie as any).duration || "");
+    setMovieYear((movie as any).year ? String((movie as any).year) : "");
+    setMovieGenres((movie as any).genre_id || (movie as any).genres || "");
+    setMovieTotalEndings((movie as any).total_endings || 5);
     setMoviePrice(movie.price !== undefined ? movie.price.toString() : '0.00');
     setMovieCurrency(movie.currency || 'INR');
     const revManaged = (movie.isRevenueManaged ?? movie.is_revenue_managed) as any;
@@ -269,6 +287,12 @@ export default function InteractiveEditorPage() {
         kids_restriction: movieKidsRestriction ? 1 : 0,
       certificate_id: movieCertificateId ? Number(movieCertificateId) : null,
       quality: movieQuality ? movieQuality.trim() : null,
+        director: movieDirector.trim() || null,
+        actors: movieActors.trim() || null,
+        duration: movieDuration.trim() || null,
+        year: movieYear ? parseInt(movieYear, 10) : null,
+        genre_id: movieGenres.trim() || null,
+        total_endings: Number(movieTotalEndings) || 5,
         price: movieIsFree ? 0 : Number(moviePrice) || 0,
         currency: movieCurrency,
         is_revenue_managed: isRevenueManaged ? 1 : 0,
@@ -1563,6 +1587,76 @@ export default function InteractiveEditorPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Director</label>
+                    <input 
+                      type="text"
+                      value={movieDirector}
+                      onChange={(e) => setMovieDirector(e.target.value)}
+                      placeholder="e.g. Mahith"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Release Year</label>
+                    <input 
+                      type="number"
+                      value={movieYear}
+                      onChange={(e) => setMovieYear(e.target.value)}
+                      placeholder="e.g. 2026"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Duration</label>
+                    <input 
+                      type="text"
+                      value={movieDuration}
+                      onChange={(e) => setMovieDuration(e.target.value)}
+                      placeholder="e.g. 01:52:00 or 112m"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Total Narrative Endings</label>
+                    <input 
+                      type="number"
+                      value={movieTotalEndings}
+                      onChange={(e) => setMovieTotalEndings(Number(e.target.value) || 5)}
+                      placeholder="e.g. 5"
+                      className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Genres (Comma separated)</label>
+                  <input 
+                    type="text"
+                    value={movieGenres}
+                    onChange={(e) => setMovieGenres(e.target.value)}
+                    placeholder="e.g. Action, Drama, Thriller, Mystery, Sci-Fi"
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Starring / Cast (Comma separated)</label>
+                  <textarea 
+                    rows={2}
+                    value={movieActors}
+                    onChange={(e) => setMovieActors(e.target.value)}
+                    placeholder="e.g. Danish, Manjunath, Amirtha, Prapanchan, Arithi Vani, Muskan Khan..."
+                    className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 ring-primary/20 transition-all text-white resize-none"
+                  />
                 </div>
 
                 {/* Interactive Payment Configuration */}
